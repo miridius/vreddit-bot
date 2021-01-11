@@ -1,0 +1,22 @@
+{
+  "name": "vreddit-telegram",
+  "version": "0.0.0",
+  "description": "A telegram bot for converting v.redd.it URLs to video files",
+  "author": {
+    "name": "David Drem Rolle",
+    "email": "dave@rolle.family"
+  },
+  "license": "UNLICENSED",
+  "private": "true",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\"",
+    "release": "npx np --no-publish"
+  },
+  "dependencies": {
+    "form-data": "^3.0.0",
+    "node-fetch": "^2.6.1",
+    "serverless-telegram": "^0.2.0"
+  },
+  "devDependencies": {}
+}
