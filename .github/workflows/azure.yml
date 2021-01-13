@@ -1,0 +1,78 @@
+name: Lint, Test, and Deploy to Azure
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - master
+
+env:
+  AZURE_APP_NAME_STAGING: staging-vreddit-bot
+  AZURE_APP_NAME_PROD: vreddit-bot
+  NODE_VERSION: 14
+  PACKAGE_DIR: package
+
+jobs:
+  test:
+    name: Lint and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+      fail-fast: false
+      max-parallel: 2
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install and audit dependencies
+        run: yarn install --frozen-lockfile --audit
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: yarn test
+
+  deploy:
+    name: Deploy to Azure Function App
+    if: ${{ github.event_name == 'push' }}
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install production deps
+        run: yarn install --frozen-lockfile --production
+
+      - name: Prepare ${{ env.PACKAGE_DIR }} dir for upload
+        # Use rsync so that we can exclude anything in .funcignore
+        run: rsync -av --prune-empty-dirs --exclude-from .funcignore ./ ${{ env.PACKAGE_DIR }}
+
+      - name: Deploy to Staging (${{ env.AZURE_APP_NAME_STAGING }})
+        if: ${{ startsWith(github.ref, 'refs/heads/') }}
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_APP_NAME_STAGING }}
+          package: ${{ env.PACKAGE_DIR }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
+
+      - name: Deploy to Prod (${{ env.AZURE_APP_NAME_PROD }})
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_APP_NAME_PROD }}
+          package: ${{ env.PACKAGE_DIR }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_PROD }}
