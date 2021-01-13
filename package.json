@@ -32,6 +32,39 @@
     "nock": "^13.0.5",
     "prettier": "^2.2.1"
   },
+  "prettier": {
+    "singleQuote": true
+  },
+  "eslintConfig": {
+    "env": {
+      "commonjs": true,
+      "es2020": true,
+      "node": true
+    },
+    "plugins": [
+      "jest"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:jest/recommended",
+      "plugin:jest/style"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 11
+    },
+    "rules": {
+      "linebreak-style": [
+        "error",
+        "unix"
+      ]
+    }
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "maxWorkers": 1,
+    "collectCoverage": true,
+    "coverageDirectory": "coverage"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
@@ -40,5 +73,8 @@
   "lint-staged": {
     "*.js": "eslint --cache --fix",
     "*.{js,css,md,json}": "prettier --write"
+  },
+  "ncu": {
+    "reject": "husky"
   }
 }
