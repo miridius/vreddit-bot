@@ -87,6 +87,5 @@ typings/
 dist
 out
 
-# Azure Functions artifacts
-local.settings.json
+# Runtime artifacts
 *.mp4

@@ -1,17 +1,12 @@
-*.mp4
-
 *.ts
 *.js.map
 *.development.js
-*.esm.js
-*.es.js
+*.es{,m}.js
 *.mjs
 
-test/
-tests/
+test*/
 coverage/
-*.test.js
-*.spec.js
+*.{test,spec}.js
 
 .git/
 .gitignore
@@ -37,8 +32,15 @@ yarn.lock
 node_modules/.cache/
 node_modules/.yarn-integrity
 
-README*
-CHANGELOG*
+README.*
+Readme.*
+CHANGELOG.*
+HISTORY.*
 LICENSE*
-
+License*
+Makefile
 .DS_Store
+
+*.mp4
+bin/ffmpeg
+*.txt
