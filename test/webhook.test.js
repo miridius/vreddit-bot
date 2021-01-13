@@ -171,6 +171,8 @@ Output #0, mp4, to 'C:\\local\\Temp\\hf352syjjka61.mp4':
 describe('createForm', () => {
   it('creates a form for a video reply', () => {
     const form = createForm(1, tempVideoFile, size, width, height, 2);
+    // remove nodejs internals from snapshot to fix test failing in CI
+    form._streams.map((s) => s?.source && delete s.source);
     expect(form).toMatchSnapshot();
   });
 });
