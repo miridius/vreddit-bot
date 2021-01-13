@@ -16,19 +16,12 @@ env:
   PACKAGE_DIR: package
 
 jobs:
-  test:
-    name: Lint and Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-      fail-fast: false
-      max-parallel: 2
+  lint:
+    name: Audit Deps, Lint, Check Code Style
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -38,19 +31,34 @@ jobs:
       - name: Lint
         run: yarn lint
 
+  test:
+    name: Run Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+      fail-fast: false
+      max-parallel: 2
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
       - name: Test
         run: yarn test
 
   deploy:
     name: Deploy to Azure Function App
     if: ${{ github.event_name == 'push' }}
-    needs: test
+    needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Use Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
