@@ -17,7 +17,7 @@ env:
 
 jobs:
   lint:
-    name: Audit Deps, Lint, Check Code Style
+    name: Audit, Lint, Check Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

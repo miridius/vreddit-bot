@@ -15,14 +15,20 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
   - [ ] 2 options for with/without audio
   - [ ] For new videos, send first to "video cache" group to get a file ID
 - [ ] Include link to reddit comments as inline keyboard
+- [ ] Support reddit links (go to json -> extract dash_url -> remove query string)
 - [ ] If forwarding to the bot from a group chat, give a button to send the video back to that chat (e.g. via inline)
 - [ ] If video is > 50 mb, try/offer a lower quality stream
-- [ ] Tune max workers param
+- [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
+- [ ] Tune Azure max workers param
 - [ ] Try other hosting options to see if it's faster and/or cheaper:
   - [ ] Azure x64 Windows host
   - [ ] Azure Linux host
   - [ ] AWS Lambda
   - [ ] Google Cloud Functions
+
+[1]: https://dev.to/mbelsky/pair-husky-with-git-lfs-in-your-javascript-project-2kh0
+[2]: https://github.com/typicode/husky/issues/108
+[3]: https://docs.github.com/en/free-pro-team@latest/github/managing-large-files/working-with-large-files
 
 ## Development
 
