@@ -32,13 +32,12 @@ jobs:
         run: yarn lint
 
   test:
-    name: Run Tests
+    name: Test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
       fail-fast: false
-      max-parallel: 2
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -51,11 +50,13 @@ jobs:
       - name: Test
         run: yarn test
 
-  deploy:
-    name: Deploy to Azure Function App
-    if: ${{ github.event_name == 'push' }}
+  deploy-staging:
+    name: Deploy to Staging
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') }}
     needs: [lint, test]
     runs-on: ubuntu-latest
+    env:
+      site: STAGING
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -69,18 +70,42 @@ jobs:
         # Use rsync so that we can exclude anything in .funcignore
         run: rsync -av --prune-empty-dirs --exclude-from .funcignore ./ ${{ env.PACKAGE_DIR }}
 
-      - name: Deploy to Staging (${{ env.AZURE_APP_NAME_STAGING }})
-        if: ${{ startsWith(github.ref, 'refs/heads/') }}
+      - name: Deploy to Azure ${{ env.site }} (${{ env[env.app-name-var] }})
         uses: azure/functions-action@v1
+        env:
+          app-name-var: AZURE_APP_NAME_${{ env.site }}
+          publish-profile-secret: AZURE_PUBLISH_PROFILE_${{ env.site }}
         with:
-          app-name: ${{ env.AZURE_APP_NAME_STAGING }}
+          app-name: ${{ env[env.app-name-var] }}
           package: ${{ env.PACKAGE_DIR }}
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_STAGING }}
+          publish-profile: ${{ secrets[env.publish-profile-secret] }}
 
-      - name: Deploy to Prod (${{ env.AZURE_APP_NAME_PROD }})
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: azure/functions-action@v1
+  deploy-prod:
+    name: Deploy to Prod
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    env:
+      site: PROD
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
         with:
-          app-name: ${{ env.AZURE_APP_NAME_PROD }}
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install production deps
+        run: yarn install --frozen-lockfile --production
+
+      - name: Prepare ${{ env.PACKAGE_DIR }} dir for upload
+        # Use rsync so that we can exclude anything in .funcignore
+        run: rsync -av --prune-empty-dirs --exclude-from .funcignore ./ ${{ env.PACKAGE_DIR }}
+
+      - name: Deploy to Azure ${{ env.site }} (${{ env[env.app-name-var] }})
+        uses: azure/functions-action@v1
+        env:
+          app-name-var: AZURE_APP_NAME_${{ env.site }}
+          publish-profile-secret: AZURE_PUBLISH_PROFILE_${{ env.site }}
+        with:
+          app-name: ${{ env[env.app-name-var] }}
           package: ${{ env.PACKAGE_DIR }}
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_PROD }}
+          publish-profile: ${{ secrets[env.publish-profile-secret] }}
