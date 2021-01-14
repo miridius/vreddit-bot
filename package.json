@@ -73,8 +73,5 @@
   "lint-staged": {
     "*.js": "eslint --cache --fix",
     "*.{js,css,md,json}": "prettier --write"
-  },
-  "ncu": {
-    "reject": "husky"
   }
 }
