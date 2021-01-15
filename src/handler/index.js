@@ -6,6 +6,7 @@ const {
   downloadVideo,
   getOutputDimensions,
   createForm,
+  telegramApiCall,
   sendVideo,
 } = require('./utils');
 
@@ -30,6 +31,10 @@ module.exports = async ({ text, chat: { id, type }, message_id }, log) => {
     log.info('Re-sending existing telegram file ID:', fileId);
     return { video: fileId, reply_to_message_id: message_id };
   }
+
+  // Inform the users that the work is in progress since it might take a while
+  // NOTE: we don't wait for this to complete, just fire it and let it run
+  telegramApiCall(`sendChatAction?chat_id=${id}&action=upload_video`);
 
   // If the video exists, it might be from a failed previous execution
   if (fs.existsSync(videoFile)) {

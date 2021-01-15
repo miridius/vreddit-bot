@@ -11,7 +11,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 ### Features:
 
 - [x] Publish an initial working PoC and get feedback
-- [ ] Broadcast an "upload_video" chat action while the user is waiting
+- [x] Broadcast an "upload_video" chat action while the user is waiting
 - [ ] Support [inline](https://core.telegram.org/bots/api#inline-mode) messages
   - [ ] 2 options for with/without audio
   - [ ] For new videos, send first to "video cache" group to get a file ID
