@@ -1,6 +1,8 @@
+/**
+ * @type import("serverless-telegram").Context
+ */
 module.exports = {
   log: {
-    debug: jest.fn(),
     verbose: jest.fn(),
     info: jest.fn(),
     warn: console.warn,

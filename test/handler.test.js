@@ -1,15 +1,16 @@
-const CHAT_ID = 123456;
-process.env.BOT_ERROR_CHAT_ID = CHAT_ID;
-process.env.BOT_API_TOKEN = '54321:fake_token';
+//@ts-check
+const CHAT_ID = process.env.BOT_ERROR_CHAT_ID ?? 123456;
+process.env.BOT_ERROR_CHAT_ID = CHAT_ID.toString();
+process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN ?? '54321:fake_token';
 
-const webhook = require('../src/webhook');
+const handler = require('../src/handler');
 const {
   getFilePaths,
   getOutputDimensions,
   downloadVideo,
   createForm,
   sendVideo,
-} = webhook;
+} = require('../src/handler/utils');
 
 const ctx = require('./defaultContext');
 const log = ctx.log;
@@ -172,6 +173,7 @@ describe('createForm', () => {
   it('creates a form for a video reply', () => {
     const form = createForm(1, tempVideoFile, size, width, height, 2);
     // remove nodejs internals from snapshot to fix test failing in CI
+    // @ts-ignore
     form._streams.map((s) => s?.source && delete s.source);
     expect(form).toMatchSnapshot();
   });
@@ -188,17 +190,10 @@ describe('sendVideo', () => {
   });
 });
 
-describe('webhook', () => {
-  const msgReply = async (text, type) => {
-    const req = {
-      body: {
-        update_id: 1,
-        message: { text, chat: { id: CHAT_ID, type }, message_id: 3 },
-      },
-    };
-    const res = await webhook(ctx, req);
-    return res?.body;
-  };
+describe('handler', () => {
+  const msgReply = (text, type) =>
+    // @ts-ignore
+    handler({ text, chat: { id: CHAT_ID, type }, message_id: 3 }, log);
 
   it('ignores messages without v.redd.it links', async () => {
     expect(await msgReply('foo')).toBeUndefined();
@@ -224,8 +219,6 @@ describe('webhook', () => {
   it('re-uses an existing file ID', async () => {
     expect(await msgReply(`...${url}/blah`)).toMatchInlineSnapshot(`
       Object {
-        "chat_id": 123456,
-        "method": "sendVideo",
         "reply_to_message_id": 3,
         "video": "BAACAgIAAxkDAAPdX_7_uS4ZUhWLumHZqKJOSPgWFhsAAscLAAIBhPlLfmhpHOQ0Tt8eBA",
       }

@@ -9,11 +9,12 @@
   "license": "UNLICENSED",
   "private": "true",
   "scripts": {
-    "start": "func start",
+    "start": "env-cmd func start",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "test": "jest --ci",
     "test:watch": "jest --clearCache && jest --watchAll",
+    "test:update": "env-cmd jest -u",
     "release": "npx ncu -e2 && npx np --no-publish"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
+    "env-cmd": "^10.1.0",
     "eslint": "^7.17.0",
     "eslint-plugin-jest": "^24.1.3",
     "filenamify": "^4.2.0",
