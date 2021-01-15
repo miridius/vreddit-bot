@@ -11,7 +11,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 ### Features:
 
 - [x] Publish an initial working PoC and get feedback
-- [ ] Broadcast an "upload_video" chat action while the user is waiting
+- [x] Broadcast an "upload_video" chat action while the user is waiting
 - [ ] Support [inline](https://core.telegram.org/bots/api#inline-mode) messages
   - [ ] 2 options for with/without audio
   - [ ] For new videos, send first to "video cache" group to get a file ID
@@ -26,6 +26,8 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 - [x] Set up dev tools (eslint, prettier, jest, husky, CI/CD, README)
 - [x] CI: Split deploy to stage/prod into separate jobs so we can see the name in the summary.
+- [ ] Increase code coverage / add badges
+- [ ] Use async file operations & fix concurrency problems (globally unique file name?)
 - [ ] CI: Optimise so that we don't run checks twice on releases?
 - [ ] Maybe rename repo/npm package to vreddit-bot?
 - [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
@@ -44,13 +46,21 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 ### Initial Setup
 
-Prerequisites:
+1. Prerequisites:
 
-- Git
-- Node.js v14 (must be 14 to match the version in Azure)
-- Yarn
+   - Git
+   - Node.js v14 (must be 14 to match the version in Azure)
+   - Yarn
 
-Clone the repo, `cd` into it, and then run `yarn install` to install dependencies
+1. `git clone` the repo and `cd` into it
+
+1. Run `yarn install` to install dependencies
+
+1. Create a `.env` file in the root of the project with the following params:
+   ```properties
+   BOT_ERROR_CHAT_ID=<your telegram chat ID (look for it in a bot update)>
+   BOT_API_TOKEN=<your bot token (ideally not the production bot)>
+   ```
 
 ### Commands
 
