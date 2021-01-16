@@ -13,7 +13,7 @@
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "test": "jest --ci",
-    "test:watch": "jest --clearCache && jest --watchAll",
+    "test:watch": "jest --clearCache && jest --watchAll --runInBand",
     "test:update": "env-cmd jest -u",
     "release": "npx ncu -e2 && npx np --no-publish"
   },
@@ -63,7 +63,6 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "maxWorkers": 1,
     "collectCoverage": true,
     "coverageDirectory": "coverage"
   },
