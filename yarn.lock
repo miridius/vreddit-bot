@@ -3725,10 +3725,10 @@ semver@^7.2.1, semver@^7.3.2:
   dependencies:
     lru-cache "^6.0.0"
 
-serverless-telegram@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.2.0.tgz#42dddb3e09e2a96666f8eff64b8a9b863d956b70"
-  integrity sha512-25UoHlSTAT3Fj3zzSLRp6lF1yJeaR+q1IFlcPBGU3cFJBJhpfn2LwmoDiGWMjijwtjKesYVtnMK8pj6CoKLUog==
+serverless-telegram@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.3.0.tgz#e6f807de3d1576b9b9d817d5ad27be033ba8ed45"
+  integrity sha512-b6lrruFZQcHXYQYKZnEmxYLYzlAAAxQ/VVoUe5Gh0FHxQlFY+MfU0TG9MhtKIhP1835moED/q0EXXx/DvCXJVw==
   dependencies:
     "@azure/functions" "^1.2.2"
 

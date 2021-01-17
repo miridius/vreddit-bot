@@ -15,7 +15,7 @@
     },
     {
       "type": "shell",
-      "label": "yarn install",
+      "label": "yarn install prod",
       "command": "yarn install --production",
       "problemMatcher": []
     }
