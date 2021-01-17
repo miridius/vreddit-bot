@@ -14,7 +14,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [x] Broadcast an "upload_video" chat action while the user is waiting
 - [ ] Support [inline](https://core.telegram.org/bots/api#inline-mode) messages
   - [ ] 2 options for with/without audio
-  - [ ] For new videos, send first to "video cache" group to get a file ID
+  - [x] For new videos, send first to "video cache" group to get a file ID
 - [ ] Include link to reddit comments as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
 - [ ] Add reddit caption (`json[0].data.children[0].data.title`)
 - [ ] Support reddit links (`json[0].data.children[0].data.media||secure_media.reddit_video.dash_url` -> remove query string)
