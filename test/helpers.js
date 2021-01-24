@@ -1,19 +1,29 @@
-//@ts-check
 const http = require('http');
 
-const CHAT_ID = 123456;
-process.env.BOT_ERROR_CHAT_ID = CHAT_ID.toString();
-process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN ?? '54321:fake_token';
+/** @type import('serverless-telegram').Message['chat'] */
+const CHAT = {
+  id: parseInt(process.env.BOT_ERROR_CHAT_ID) || 123456,
+  first_name: 'Dave',
+  last_name: 'Rolle',
+  username: 'DavidRolle',
+  type: 'private',
+};
+const FROM = { ...CHAT, is_bot: false, language_code: 'en' };
+process.env.BOT_ERROR_CHAT_ID = CHAT.id.toString();
+process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN || '54321:fake_token';
 
-/**
- * @type import("serverless-telegram").Logger
- */
+/** @type import("serverless-telegram").Logger */
 const log = Object.assign(jest.fn(), {
   verbose: jest.fn(),
   info: jest.fn(),
-  warn: console.warn,
-  error: console.error,
+  warn: jest.fn(),
+  error: jest.fn(),
 });
+require('../src/env').setLogMethods(log);
+
+/** @type import("serverless-telegram").Context */
+// @ts-ignore
+const ctx = { log };
 
 // note this does not start the server, to do so call .listen(port).
 const createProxyServer = () =>
@@ -36,4 +46,43 @@ const createProxyServer = () =>
 // @ts-ignore
 const mocked = (val) => val;
 
-module.exports = { CHAT_ID, log, createProxyServer, mocked };
+const after = (retValOrPromise, codeToRun) => {
+  const passThroughRetVal = (r) => {
+    codeToRun();
+    return r;
+  };
+  return typeof retValOrPromise.then === 'function'
+    ? retValOrPromise.then(passThroughRetVal)
+    : passThroughRetVal(retValOrPromise);
+};
+
+/**
+ * @param {() => any} testFn
+ * @param {Array<[jest.MockInstance, any[], any?]>} mockSpecs
+ */
+const withFnMocks = (testFn, ...mockSpecs) => {
+  // skip any empty/falsy specs
+  mockSpecs = mockSpecs.filter((spec) => spec?.[0]);
+  mockSpecs.forEach(([mockFn, , mockReturn]) =>
+    typeof mockReturn === 'function'
+      ? mockFn.mockImplementationOnce(mockReturn)
+      : mockFn?.mockReturnValueOnce?.(mockReturn)
+  );
+  const result = testFn();
+  return after(result, () =>
+    mockSpecs.forEach(([mockFn, mockArgs]) => {
+      if (!Array.isArray(mockArgs)) mockArgs = [mockArgs];
+      if (mockFn) expect(mockFn).toHaveBeenLastCalledWith(...mockArgs);
+    })
+  );
+};
+
+module.exports = {
+  CHAT,
+  createProxyServer,
+  ctx,
+  FROM,
+  log,
+  mocked,
+  withFnMocks,
+};

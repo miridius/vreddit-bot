@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`telegramApi works with file params (sendVideo) 1`] = `
+Object {
+  "ok": true,
+  "result": Object {
+    "chat": Object {
+      "first_name": "Dave",
+      "id": 123456,
+      "last_name": "Rolle",
+      "type": "private",
+      "username": "DavidRolle",
+    },
+    "date": 1611448894,
+    "from": Object {
+      "first_name": "v.redd.it",
+      "id": 54321,
+      "is_bot": true,
+      "username": "vreddit_bot",
+    },
+    "message_id": 44,
+    "video": Object {
+      "duration": 11,
+      "file_id": "BAACAgIAAxkDAAMsYAzCPc1oRx1yMPNTMvQbq0UIYFcAAqcKAAJavGlI67jMXUiP1L0eBA",
+      "file_name": "hf352syjjka61.mp4",
+      "file_size": 3264564,
+      "file_unique_id": "AgADpwoAAlq8aUg",
+      "height": 720,
+      "mime_type": "video/mp4",
+      "thumb": Object {
+        "file_id": "AAMCAgADGQMAAyxgDMI9zWhHHXIw81My9BurRQhgVwACpwoAAlq8aUjruMxdSI_UvV9pvZouAAMBAAdtAANzdQACHgQ",
+        "file_size": 10120,
+        "file_unique_id": "AQADX2m9mi4AA3N1AAI",
+        "height": 320,
+        "width": 180,
+      },
+      "width": 406,
+    },
+  },
+}
+`;
+
+exports[`telegramApi works with no params (getMe) 1`] = `
+Object {
+  "ok": true,
+  "result": Object {
+    "can_join_groups": true,
+    "can_read_all_group_messages": true,
+    "first_name": "v.redd.it",
+    "id": 54321,
+    "is_bot": true,
+    "supports_inline_queries": true,
+    "username": "vreddit_bot",
+  },
+}
+`;
+
+exports[`telegramApi works with normal params (sendMessage) 1`] = `
+Object {
+  "ok": true,
+  "result": Object {
+    "chat": Object {
+      "first_name": "Dave",
+      "id": 123456,
+      "last_name": "Rolle",
+      "type": "private",
+      "username": "DavidRolle",
+    },
+    "date": 1611445887,
+    "from": Object {
+      "first_name": "v.redd.it",
+      "id": 54321,
+      "is_bot": true,
+      "username": "vreddit_bot",
+    },
+    "message_id": 42,
+    "reply_to_message": Object {
+      "chat": Object {
+        "first_name": "Dave",
+        "id": 123456,
+        "last_name": "Rolle",
+        "type": "private",
+        "username": "DavidRolle",
+      },
+      "date": 1611414446,
+      "entities": Array [
+        Object {
+          "length": 31,
+          "offset": 0,
+          "type": "url",
+        },
+      ],
+      "from": Object {
+        "first_name": "Dave",
+        "id": 123456,
+        "is_bot": false,
+        "language_code": "en",
+        "last_name": "Rolle",
+        "username": "DavidRolle",
+      },
+      "message_id": 35,
+      "text": "https://v.redd.it/rk2repuuvc261",
+    },
+    "text": "Test Message",
+  },
+}
+`;

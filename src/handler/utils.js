@@ -1,12 +1,10 @@
-//@ts-check
 const { exec } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const { resolve } = require('path');
-const FormData = require('form-data');
-const { default: fetch } = require('node-fetch');
 
-const { BOT_API_TOKEN, FFMPEG } = require('../env');
+const { FFMPEG, MAX_FILE_SIZE_BYTES, log } = require('../env');
+const telegramApi = require('../telegram-api');
 
 /**
  * @param {string} videoId
@@ -17,23 +15,32 @@ const getFilePaths = (videoId) => ({
 });
 
 /**
- * @param {string} url
- * @param {any} outputFile
- * @param {import('serverless-telegram').Logger} log
+ * Delete the video if it exists in case it is from a failed previous execution
+ * @param {fs.PathLike} videoFile
  */
-const downloadVideo = (url, outputFile, log) => {
+const deleteIfExisting = (videoFile) => {
+  if (fs.existsSync(videoFile)) {
+    log.warn(`${videoFile} already exists, attempting to delete`);
+    fs.unlinkSync(videoFile);
+  }
+};
+
+/**
+ * @param {string} url dash playlist URL
+ * @param {any} outputFile full path to save the video to
+ * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
+ */
+const downloadVideo = (url, outputFile, httpProxy) => {
   const dashUrl = `${url}/DASHPlaylist.mpd`;
-  const httpProxy = process.env.HTTP_PROXY
-    ? `-http_proxy ${process.env.HTTP_PROXY}`
-    : '';
+  httpProxy = httpProxy ? `-http_proxy ${httpProxy}` : '';
   log.info('Saving:', dashUrl, 'to:', outputFile, 'using:', FFMPEG, httpProxy);
   return new Promise((resolve, reject) =>
     exec(
       `${FFMPEG} ${httpProxy} -i "${dashUrl}" -c copy ${outputFile}`,
       (err, stdout, stderr) => {
         if (err) reject(err);
-        log.verbose(`stdout: ${stdout}`);
-        log.verbose(`stderr: ${stderr}`);
+        log.debug(`stdout: ${stdout}`);
+        log.debug(`stderr: ${stderr}`);
         resolve(stderr);
       }
     )
@@ -42,68 +49,81 @@ const downloadVideo = (url, outputFile, log) => {
 
 /**
  * @param {string} ffmpegStderr
- * @param {import('serverless-telegram').Logger} log
  */
-const getOutputDimensions = (ffmpegStderr, log) => {
+const getOutputDimensions = (ffmpegStderr) => {
   const output = ffmpegStderr?.split('Output #0')?.[1];
   const [, w, h] = output?.match(/Video:\s.*\s(\d+)x(\d+)\s/) || [];
-  log.verbose({ w, h });
+  log.debug({ w, h });
   const nanToUndef = (n) => (isNaN(n) ? undefined : n);
   return { width: nanToUndef(parseInt(w)), height: nanToUndef(parseInt(h)) };
 };
 
-/**
- * @param {number} chatId
- * @param {fs.PathLike} videoFile
- * @param {number} size
- * @param {number} [width]
- * @param {number} [height]
- * @param {number} [replyTo]
- */
-const createForm = (chatId, videoFile, size, width, height, replyTo) => {
-  const form = new FormData();
-  form.append('chat_id', chatId);
-  form.append('video', fs.createReadStream(videoFile), { knownLength: size });
-  if (width && height) {
-    form.append('width', width);
-    form.append('height', height);
+const checkSize = async (videoFile, { id, type }, replyTo) => {
+  const { size } = fs.statSync(videoFile);
+  log.debug({ size });
+  if (size > MAX_FILE_SIZE_BYTES) {
+    const text = `Video too large (${(size / 1024 / 1024).toFixed(2)} MB)`;
+    log.error(text);
+    if (type === 'private') {
+      await telegramApi('sendMessage', {
+        chat_id: id,
+        text,
+        reply_to_message_id: replyTo,
+      });
+    }
+    return false;
   }
-  if (replyTo) form.append('reply_to_message_id', replyTo);
-  return form;
+  return true;
 };
 
 /**
- * @param {string} path
- * @param {any} [body]
+ * @param {import('serverless-telegram').Message['chat']} chat
+ * @param {fs.PathLike} video
+ * @param {number} [width]
+ * @param {number} [height]
+ * @param {number} [replyTo] ID of the original message to reply to
  */
-const telegramApiCall = (path, body) =>
-  fetch(
-    `https://api.telegram.org/bot${BOT_API_TOKEN}/${path}`,
-    body && { method: 'POST', body }
-  )
-    .then((res) => res.json())
-    .then((json) => {
-      if (!json.ok) throw new Error(`Telegram API error: ${json.description}`);
-      return json;
-    });
-
-/**
- * @param {FormData} form
- * @param {import('serverless-telegram').Logger} log
- */
-const sendVideo = async (form, log) => {
+const sendVideo = async (chat, video, width, height, replyTo) => {
   log.info('Sending message to telegram server');
-  const json = await telegramApiCall('sendVideo', form);
+  const json = await telegramApi(
+    'sendVideo',
+    { chat_id: chat.id, width, height, reply_to_message_id: replyTo },
+    { video }
+  );
   const fileId = json?.result?.video?.file_id;
-  log.verbose('fileId:', fileId);
+  log.debug('fileId:', fileId);
   return fileId;
 };
 
+/**
+ * @param {string} text
+ */
+const parseText = (text) => {
+  const [url, videoId] =
+    text?.match(/https?:\/\/v\.redd\.it\/([-a-zA-Z0-9]+)/) || [];
+  log.debug({ url, videoId });
+  return { url, videoId };
+};
+
+/**
+ * @param {string} videoId
+ */
+const getCachedFileId = (videoId) => {
+  const { metadataFile } = getFilePaths(videoId);
+  let fileId = fs.existsSync(metadataFile) && require(metadataFile)?.fileId;
+  if (fileId) {
+    log.info('Found existing telegram file ID:', fileId);
+    return fileId;
+  }
+};
+
 module.exports = {
-  getFilePaths,
+  checkSize,
+  deleteIfExisting,
   downloadVideo,
+  getCachedFileId,
+  getFilePaths,
   getOutputDimensions,
-  createForm,
-  telegramApiCall,
+  parseText,
   sendVideo,
 };

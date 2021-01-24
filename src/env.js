@@ -1,4 +1,3 @@
-//@ts-check
 const os = require('os');
 const { resolve } = require('path');
 
@@ -23,10 +22,34 @@ if (isNaN(BOT_ERROR_CHAT_ID)) {
   throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
 }
 
+/**
+ * @type {import('serverless-telegram').Message['chat']}
+ */
+const CACHE_CHAT = {
+  id: -375023585,
+  title: 'V.redd.it Video Cache',
+  type: 'group',
+  all_members_are_administrators: true,
+};
+
+const { debug, info, warn, error } = console;
+const log = { debug, info, warn, error };
+
+/**
+ * @param {import('serverless-telegram').Logger} logger
+ */
+const setLogMethods = (logger) => {
+  const { verbose: debug, info, warn, error } = logger;
+  Object.assign(log, { debug, info, warn, error });
+};
+
 module.exports = {
   BOT_API_TOKEN,
   BOT_ERROR_CHAT_ID,
+  CACHE_CHAT,
   FFMPEG,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,
+  log,
+  setLogMethods,
 };
