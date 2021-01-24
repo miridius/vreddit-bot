@@ -22,9 +22,7 @@ if (isNaN(BOT_ERROR_CHAT_ID)) {
   throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
 }
 
-/**
- * @type {import('serverless-telegram').Message['chat']}
- */
+/** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
   id: -375023585,
   title: 'V.redd.it Video Cache',

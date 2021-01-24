@@ -77,7 +77,7 @@ const checkSize = async (videoFile, { id, type }, replyTo) => {
 };
 
 /**
- * @param {import('serverless-telegram').Message['chat']} chat
+ * @param {import('serverless-telegram').Chat} chat
  * @param {fs.PathLike} video
  * @param {number} [width]
  * @param {number} [height]

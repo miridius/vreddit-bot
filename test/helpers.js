@@ -1,6 +1,6 @@
 const http = require('http');
 
-/** @type import('serverless-telegram').Message['chat'] */
+/** @type import('serverless-telegram').Chat */
 const CHAT = {
   id: parseInt(process.env.BOT_ERROR_CHAT_ID) || 123456,
   first_name: 'Dave',

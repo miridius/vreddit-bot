@@ -12,7 +12,7 @@ const {
 /**
  * @param {string} url
  * @param {string} videoId
- * @param {import('serverless-telegram').Message['chat']} chat
+ * @param {import('serverless-telegram').Chat} chat
  * @param {number} [replyTo]
  * @returns {Promise<string | void>} fileId of uploaded video, or void if it's too big
  */

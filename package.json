@@ -15,13 +15,13 @@
     "test": "jest --ci",
     "test:watch": "jest --clearCache && jest --watchAll --runInBand",
     "test:update": "env-cmd jest -u",
-    "update-deps": "npx ncu -u && yarn install && yarn test",
+    "update-deps": "npx ncu -e2 || (npx ncu -u && yarn install && yarn lint && yarn test)",
     "release": "npx ncu -e2 && npx np --no-publish"
   },
   "dependencies": {
     "form-data": "^3.0.0",
     "node-fetch": "^2.6.1",
-    "serverless-telegram": "^0.3.1"
+    "serverless-telegram": "^0.3.2"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",

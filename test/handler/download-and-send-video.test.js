@@ -35,7 +35,7 @@ const downloadTest = async (sizeCheckPass, returnFileId) => {
   const width = 123;
   const height = 456;
   const fileId = returnFileId ? 'new file ID' : undefined;
-  /**@type import('serverless-telegram').Message['chat'] */
+  /**@type import('serverless-telegram').Chat */
   const chat = { id: CHAT.id, type: 'group' };
   const replyTo = 42;
 

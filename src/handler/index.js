@@ -3,9 +3,7 @@ const { getCachedFileId, parseText } = require('./utils');
 const telegramApi = require('../telegram-api');
 const downloadAndSend = require('./download-and-send');
 
-/**
- * @type import('serverless-telegram').MessageHandler
- */
+/** @type import('serverless-telegram').MessageHandler */
 exports.message = async ({ text, chat, message_id }, _log) => {
   setLogMethods(_log);
   log.debug('Running on', OS_INFO);
@@ -26,9 +24,7 @@ exports.message = async ({ text, chat, message_id }, _log) => {
   await downloadAndSend(url, videoId, chat, message_id);
 };
 
-/**
- * @type import('serverless-telegram').InlineHandler
- */
+/** @type import('serverless-telegram').InlineHandler */
 exports.inline = async ({ query }, _log) => {
   setLogMethods(_log);
 
