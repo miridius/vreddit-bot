@@ -3116,10 +3116,10 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-nock@^13.0.5:
-  version "13.0.5"
-  resolved "https://registry.yarnpkg.com/nock/-/nock-13.0.5.tgz#a618c6f86372cb79fac04ca9a2d1e4baccdb2414"
-  integrity sha512-1ILZl0zfFm2G4TIeJFW0iHknxr2NyA+aGCMTjDVUsBY4CkMRispF1pfIYkTRdAR/3Bg+UzdEuK0B6HczMQZcCg==
+nock@^13.0.6:
+  version "13.0.6"
+  resolved "https://registry.yarnpkg.com/nock/-/nock-13.0.6.tgz#9f90573ea6e84883b94eeac374d1c73460afed56"
+  integrity sha512-W81UZ1Tv21SWDZcA8Lu9LXYVl2gO9ADY5GadC6gFV9690h4TXz0oCkEoMckN/sPMHkDA79Ka9dXga9Mt1+j+Sg==
   dependencies:
     debug "^4.1.0"
     json-stringify-safe "^5.0.1"
@@ -3725,10 +3725,10 @@ semver@^7.2.1, semver@^7.3.2:
   dependencies:
     lru-cache "^6.0.0"
 
-serverless-telegram@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.3.0.tgz#e6f807de3d1576b9b9d817d5ad27be033ba8ed45"
-  integrity sha512-b6lrruFZQcHXYQYKZnEmxYLYzlAAAxQ/VVoUe5Gh0FHxQlFY+MfU0TG9MhtKIhP1835moED/q0EXXx/DvCXJVw==
+serverless-telegram@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.3.2.tgz#5051c4ceb9a7e66ca47b95e69dfafec8ac68b901"
+  integrity sha512-jUvNjDRwIOEMJHZxgrIdh8TS4tTedjGU4fuRzZ3UC0XpztaMi9kht+2+lnuJXVB34wpiEL2FfYUAB0EKf+Nh6w==
   dependencies:
     "@azure/functions" "^1.2.2"
 

@@ -1,4 +1,3 @@
-//@ts-check
 const { createAzureTelegramWebhook } = require('serverless-telegram');
 const handler = require('./handler');
 const { BOT_ERROR_CHAT_ID } = require('./env');

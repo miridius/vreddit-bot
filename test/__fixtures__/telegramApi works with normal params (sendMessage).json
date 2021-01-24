@@ -1,0 +1,78 @@
+[
+  {
+    "scope": "https://api.telegram.org:443",
+    "method": "GET",
+    "path": "/bot54321:fake_token/sendMessage?chat_id=123456&text=Test+Message&reply_to_message_id=35",
+    "body": "",
+    "status": 200,
+    "response": {
+      "ok": true,
+      "result": {
+        "message_id": 42,
+        "from": {
+          "id": 54321,
+          "is_bot": true,
+          "first_name": "v.redd.it",
+          "username": "vreddit_bot"
+        },
+        "chat": {
+          "id": 123456,
+          "first_name": "Dave",
+          "last_name": "Rolle",
+          "username": "DavidRolle",
+          "type": "private"
+        },
+        "date": 1611445887,
+        "reply_to_message": {
+          "message_id": 35,
+          "from": {
+            "id": 123456,
+            "is_bot": false,
+            "first_name": "Dave",
+            "last_name": "Rolle",
+            "username": "DavidRolle",
+            "language_code": "en"
+          },
+          "chat": {
+            "id": 123456,
+            "first_name": "Dave",
+            "last_name": "Rolle",
+            "username": "DavidRolle",
+            "type": "private"
+          },
+          "date": 1611414446,
+          "text": "https://v.redd.it/rk2repuuvc261",
+          "entities": [
+            {
+              "offset": 0,
+              "length": 31,
+              "type": "url"
+            }
+          ]
+        },
+        "text": "Test Message"
+      }
+    },
+    "rawHeaders": [
+      "Server",
+      "nginx/1.16.1",
+      "Date",
+      "Sat, 23 Jan 2021 23:51:27 GMT",
+      "Content-Type",
+      "application/json",
+      "Content-Length",
+      "680",
+      "Connection",
+      "close",
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload",
+      "Access-Control-Allow-Origin",
+      "*",
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS",
+      "Access-Control-Expose-Headers",
+      "Content-Length,Content-Type,Date,Server,Connection"
+    ],
+    "responseIsBinary": false
+  }
+]
