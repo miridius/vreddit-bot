@@ -11,6 +11,7 @@ const CHAT = {
 const FROM = { ...CHAT, is_bot: false, language_code: 'en' };
 process.env.BOT_ERROR_CHAT_ID = CHAT.id.toString();
 process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN || '54321:fake_token';
+process.env.HOME = process.env.HOME || __dirname;
 
 /** @type import("serverless-telegram").Logger */
 const log = Object.assign(jest.fn(), {

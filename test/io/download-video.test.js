@@ -30,18 +30,11 @@ afterAll(() => {
 // TEST DATA
 const videoId = 'hf352syjjka61';
 
-// const sep = os.platform().startsWith('win') ? '\\' : '/';
-// const tempVideoFile = `${os.tmpdir()}${sep}${videoId}.mp4`;
 const tempVideoFile = resolve(tmpdir(), `${videoId}.mp4`);
-// const metadataFile = `${__dirname}${sep}data${sep}${videoId}.json`;
-// const ffmpegStderr = readFileSync(__dirname + '/data/ffmpegStderr.txt', 'utf8');
 
 const width = 406;
 const height = 720;
 const size = 3264564;
-
-// const fileId =
-//   'BAACAgIAAxkDAAPZX_7y45KDltDw9kn2Q41TT6za5YsAAqELAAIBhPlLbEBMY3KuURYeBA';
 
 /** @param {import("fs").PathLike} f */
 const _deleteIfExisting = (f) => existsSync(f) && unlinkSync(f);
@@ -70,7 +63,9 @@ describe('downloadVideo', () => {
     _deleteIfExisting(tempVideoFile);
   });
   it('throws an error in case of failure', async () => {
-    return expect(downloadVideo('foo')).rejects.toThrow(/Command failed/);
+    return expect(
+      withNockback(downloadVideo)('does not exist!'),
+    ).rejects.toThrow(/Command failed/);
   });
 });
 
