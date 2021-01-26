@@ -66,14 +66,24 @@ Object {
       "type": "private",
       "username": "DavidRolle",
     },
-    "date": 1611445887,
+    "date": 1611692688,
     "from": Object {
       "first_name": "v.redd.it",
       "id": 54321,
       "is_bot": true,
       "username": "vreddit_bot",
     },
-    "message_id": 42,
+    "message_id": 54,
+    "reply_markup": Object {
+      "inline_keyboard": Array [
+        Array [
+          Object {
+            "text": "Click me",
+            "url": "https://example.com/",
+          },
+        ],
+      ],
+    },
     "reply_to_message": Object {
       "chat": Object {
         "first_name": "Dave",

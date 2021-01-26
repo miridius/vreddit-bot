@@ -2,7 +2,7 @@ const http = require('http');
 
 /** @type import('serverless-telegram').Chat */
 const CHAT = {
-  id: parseInt(process.env.BOT_ERROR_CHAT_ID) || 123456,
+  id: parseInt(process.env.BOT_ERROR_CHAT_ID || '123456') || 123456,
   first_name: 'Dave',
   last_name: 'Rolle',
   username: 'DavidRolle',
@@ -19,7 +19,7 @@ const log = Object.assign(jest.fn(), {
   warn: jest.fn(),
   error: jest.fn(),
 });
-require('../src/env').setLogMethods(log);
+require('../src/io/environment').setLogMethods(log);
 
 /** @type import("serverless-telegram").Context */
 // @ts-ignore
@@ -29,13 +29,14 @@ const ctx = { log };
 const createProxyServer = () =>
   http.createServer((req, res) => {
     // console.debug('Serving:', req.url);
-    req.pipe(
-      http.request(req.url, req, (remoteRes) => {
-        res.writeHead(remoteRes.statusCode, remoteRes.headers);
-        remoteRes.pipe(res, { end: true });
-      }),
-      { end: true }
-    );
+    req.url &&
+      req.pipe(
+        http.request(req.url, req, (remoteRes) => {
+          res.writeHead(remoteRes.statusCode || 200, remoteRes.headers);
+          remoteRes.pipe(res, { end: true });
+        }),
+        { end: true },
+      );
   });
 
 /**
@@ -46,14 +47,42 @@ const createProxyServer = () =>
 // @ts-ignore
 const mocked = (val) => val;
 
+/**
+ * @param {string} name
+ * @param {jest.MockInstance} mockFn */
+const setDefaultImpl = (name, mockFn) =>
+  mockFn.mockName(name).mockImplementation((...args) => {
+    throw new Error(
+      `Un-mocked call to function "${name}"
+(args: ${JSON.stringify(args)})`,
+    );
+  });
+
+/** @param {jest.Mocked<any>[]} mockModules */
+const setDefaultImpls = (...mockModules) => {
+  mockModules.forEach((m) =>
+    Object.entries(m).forEach(
+      ([k, v]) => typeof v === 'function' && setDefaultImpl(k, v),
+    ),
+  );
+};
+
 const after = (retValOrPromise, codeToRun) => {
   const passThroughRetVal = (r) => {
     codeToRun();
     return r;
   };
-  return typeof retValOrPromise.then === 'function'
+  return typeof retValOrPromise?.then === 'function'
     ? retValOrPromise.then(passThroughRetVal)
     : passThroughRetVal(retValOrPromise);
+};
+
+const expectWithMessage = (fn, message) => {
+  try {
+    return fn();
+  } catch (error) {
+    throw new Error(`${message}:\n${error}`);
+  }
 };
 
 /**
@@ -63,18 +92,34 @@ const after = (retValOrPromise, codeToRun) => {
 const withFnMocks = (testFn, ...mockSpecs) => {
   // skip any empty/falsy specs
   mockSpecs = mockSpecs.filter((spec) => spec?.[0]);
-  mockSpecs.forEach(([mockFn, , mockReturn]) =>
-    typeof mockReturn === 'function'
-      ? mockFn.mockImplementationOnce(mockReturn)
-      : mockFn?.mockReturnValueOnce?.(mockReturn)
-  );
+  let numCalls = 0;
+  mockSpecs.forEach(([mockFn, mockArgs, mockReturn], i) => {
+    mockFn.mockImplementationOnce((...args) => {
+      expectWithMessage(
+        () => expect(args).toEqual(mockArgs),
+        `Function "${mockFn.getMockName()}" called with incorrect args`,
+      );
+      expectWithMessage(
+        () => expect(++numCalls).toBe(i + 1),
+        `Function "${mockFn.getMockName()}" called in the wrong order`,
+      );
+      return typeof mockReturn === 'function'
+        ? mockReturn(...args)
+        : mockReturn;
+    });
+  });
   const result = testFn();
   return after(result, () =>
-    mockSpecs.forEach(([mockFn, mockArgs]) => {
-      if (!Array.isArray(mockArgs)) mockArgs = [mockArgs];
-      if (mockFn) expect(mockFn).toHaveBeenLastCalledWith(...mockArgs);
-    })
+    expectWithMessage(
+      () => expect(numCalls).toBe(mockSpecs.length),
+      'Not all mocked functions were called',
+    ),
   );
+  // mockSpecs.forEach(([mockFn, mockArgs]) => {
+  //   if (!Array.isArray(mockArgs)) mockArgs = [mockArgs];
+  //   if (mockFn) expect(mockFn).toHaveBeenCalledWith(...mockArgs);
+  // })
+  // );
 };
 
 module.exports = {
@@ -84,5 +129,6 @@ module.exports = {
   FROM,
   log,
   mocked,
+  setDefaultImpls,
   withFnMocks,
 };

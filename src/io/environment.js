@@ -9,18 +9,24 @@ const OS_INFO = [os.platform(), os.arch(), os.type(), os.version()].join(' ');
 
 // path to ffmpeg executable
 const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
-const FFMPEG = resolve(__dirname, `../ffmpeg/bin/ffmpeg${fileExtension}`);
+const FFMPEG =
+  process.env.FFMPEG ||
+  resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
 
-// Secrets loaded from environment variables, throws an error if any are missing
-const loadEnvOrThrow = (k) => {
-  if (!process.env[k]) throw new Error(`${k} environment variable not set!`);
-  return process.env[k];
+// Load constants from environment variables, throw an error if they are missing
+/** @param {string} key */
+const loadEnvOrThrow = (key) => {
+  const value = process.env[key];
+  if (!value) throw new Error(`${key} environment variable not set!`);
+  return value;
 };
 const BOT_API_TOKEN = loadEnvOrThrow('BOT_API_TOKEN');
 const BOT_ERROR_CHAT_ID = parseInt(loadEnvOrThrow('BOT_ERROR_CHAT_ID'));
+// make sure chat ID is a number
 if (isNaN(BOT_ERROR_CHAT_ID)) {
   throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
 }
+const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), 'data');
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
@@ -45,6 +51,7 @@ module.exports = {
   BOT_API_TOKEN,
   BOT_ERROR_CHAT_ID,
   CACHE_CHAT,
+  CACHE_DIR,
   FFMPEG,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,

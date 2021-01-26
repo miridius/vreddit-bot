@@ -1,0 +1,39 @@
+[
+  {
+    "scope": "https://www.reddit.com:443",
+    "method": "GET",
+    "path": "/video/rk2repuuvc261",
+    "body": "",
+    "status": 301,
+    "response": "",
+    "rawHeaders": [
+      "Connection",
+      "close",
+      "Content-Length",
+      "0",
+      "Content-Type",
+      "text/html; charset=utf-8",
+      "location",
+      "https://www.reddit.com/r/blackmagicfuckery/comments/k3tisl/wait_a_minute_0_o/",
+      "cache-control",
+      "max-age=0, must-revalidate",
+      "X-Moose",
+      "majestic",
+      "Accept-Ranges",
+      "bytes",
+      "Date",
+      "Tue, 26 Jan 2021 22:22:41 GMT",
+      "Via",
+      "1.1 varnish",
+      "Set-Cookie",
+      "csv=1; Max-Age=63072000; Domain=.reddit.com; Path=/; Secure; SameSite=None",
+      "Set-Cookie",
+      "edgebucket=P2OgLd7jI71GhzIgwv; Domain=reddit.com; Max-Age=63071999; Path=/;  secure",
+      "Strict-Transport-Security",
+      "max-age=15552000; includeSubDomains; preload",
+      "Server",
+      "snooserv"
+    ],
+    "responseIsBinary": false
+  }
+]

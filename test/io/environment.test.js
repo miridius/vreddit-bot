@@ -1,6 +1,6 @@
-const { mocked } = require('./helpers');
+const { mocked } = require('../helpers');
 
-const envPath = '../src/env';
+const envPath = '../../src/io/environment';
 
 beforeEach(() => {
   jest.resetModules();
@@ -15,14 +15,14 @@ describe('env', () => {
   it('throws an error if secrets are missing', () => {
     delete process.env.BOT_API_TOKEN;
     expect(() => require(envPath)).toThrowErrorMatchingInlineSnapshot(
-      `"BOT_API_TOKEN environment variable not set!"`
+      `"BOT_API_TOKEN environment variable not set!"`,
     );
   });
 
   it('throws an error if secrets are not valid', () => {
     process.env.BOT_ERROR_CHAT_ID = 'not a number';
     expect(() => require(envPath)).toThrowErrorMatchingInlineSnapshot(
-      `"BOT_ERROR_CHAT_ID env var is not a valid integer"`
+      `"BOT_ERROR_CHAT_ID env var is not a valid integer"`,
     );
   });
 
