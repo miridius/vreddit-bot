@@ -1,5 +1,5 @@
 {
-  "scriptFile": "../src/index.js",
+  "scriptFile": "../src/webhook.js",
   "bindings": [
     {
       "authLevel": "function",

@@ -1,5 +1,5 @@
 const { mocked, CHAT, withFnMocks, ctx, FROM } = require('./helpers');
-const webhook = require('../src');
+const webhook = require('../src/webhook');
 
 jest.mock('../src/handler');
 const handler = mocked(require('../src/handler'));
@@ -22,7 +22,7 @@ describe('webhook', () => {
     };
     withFnMocks(
       () => expect(webhook(ctx, msgHttpReq)).resolves.toEqual(msgHttpRes),
-      [handler.message, [message, ctx.log], msgBotResponse]
+      [handler.message, [message, ctx.log], msgBotResponse],
     );
   });
 
@@ -47,7 +47,7 @@ describe('webhook', () => {
     };
     withFnMocks(
       () => expect(webhook(ctx, inlineHttpReq)).resolves.toEqual(inlineHttpRes),
-      [handler.inline, [inline_query, ctx.log], inlineBotResponse]
+      [handler.inline, [inline_query, ctx.log], inlineBotResponse],
     );
   });
 

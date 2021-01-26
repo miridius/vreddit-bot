@@ -1,8 +1,12 @@
 {
+  "typeAcquisition": {
+    "include": ["node"]
+  },
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2020",
-    "checkJs": true
-  },
-  "exclude": ["node_modules", "**/node_modules/*"]
+    "checkJs": true,
+    "strict": true,
+    "noImplicitAny": false
+  }
 }

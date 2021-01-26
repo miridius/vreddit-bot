@@ -2,13 +2,13 @@
   {
     "scope": "https://api.telegram.org:443",
     "method": "GET",
-    "path": "/bot54321:fake_token/sendMessage?chat_id=123456&text=Test+Message&reply_to_message_id=35",
+    "path": "/bot54321:fake_token/sendMessage?chat_id=123456&text=Test+Message&reply_to_message_id=35&reply_markup=%7B%22inline_keyboard%22%3A%5B%5B%7B%22text%22%3A%22Click+me%22%2C%22url%22%3A%22https%3A%2F%2Fexample.com%22%7D%5D%5D%7D",
     "body": "",
     "status": 200,
     "response": {
       "ok": true,
       "result": {
-        "message_id": 42,
+        "message_id": 54,
         "from": {
           "id": 54321,
           "is_bot": true,
@@ -22,7 +22,7 @@
           "username": "DavidRolle",
           "type": "private"
         },
-        "date": 1611445887,
+        "date": 1611692688,
         "reply_to_message": {
           "message_id": 35,
           "from": {
@@ -50,18 +50,28 @@
             }
           ]
         },
-        "text": "Test Message"
+        "text": "Test Message",
+        "reply_markup": {
+          "inline_keyboard": [
+            [
+              {
+                "text": "Click me",
+                "url": "https://example.com/"
+              }
+            ]
+          ]
+        }
       }
     },
     "rawHeaders": [
       "Server",
       "nginx/1.16.1",
       "Date",
-      "Sat, 23 Jan 2021 23:51:27 GMT",
+      "Tue, 26 Jan 2021 20:24:48 GMT",
       "Content-Type",
       "application/json",
       "Content-Length",
-      "680",
+      "751",
       "Connection",
       "close",
       "Strict-Transport-Security",
