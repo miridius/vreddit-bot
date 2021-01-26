@@ -1,6 +1,6 @@
 {
   "name": "vreddit-bot",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A telegram bot for converting v.redd.it URLs to video files",
   "author": {
     "name": "David Drem Rolle",
