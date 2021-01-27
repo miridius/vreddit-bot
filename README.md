@@ -12,24 +12,31 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 - [x] Publish an initial working PoC and get feedback
 - [x] Broadcast an "upload_video" chat action while the user is waiting
-- [ ] Support [inline](https://core.telegram.org/bots/api#inline-mode) messages
-  - [ ] 2 options for with/without audio
+- [x] Support [inline](https://core.telegram.org/bots/api#inline-mode) messages
   - [x] For new videos, send first to "video cache" group to get a file ID
-- [ ] Include link to reddit comments as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
-- [ ] Add reddit caption (`json[0].data.children[0].data.title`)
-- [ ] Support reddit links (`json[0].data.children[0].data.media||secure_media.reddit_video.dash_url` -> remove query string)
+  - [x] 4 options for with/without caption and/or source button
+- [x] Support reddit links
+- [x] Add reddit post title as video caption
+- [x] Include link to source as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
 - [ ] If forwarding to the bot from a group chat, give a button to send the video back to that chat (e.g. via inline)
-- [ ] If video is > 50 mb, try/offer a lower quality stream
+- [ ] If video is > 50 mb, try to use lower quality stream
 - [ ] Reply to /help with a short text about what the bot can do
+- [ ] Stop the bot sometimes asking for location info when using inline mode
+- [ ] Use youtube-dl to add support for youtube & many other sites
+  - Check output for "ERROR: Unsupported URL: https://example.com"
+  - Probably need to add FFmpeg to PATH
+  - Format opts (in config file?): `-f 'bestvideo[ext=mp4][filesize<?45M]+bestaudio[ext=m4a][filesize<?5M]/best[ext=mp4][filesize<?50M]'`
+  - Note that for v.redd.it filesize is not known so we still need to check size of output
+- [ ] Use streamable.com for videos between 50-500MB? (max 720p & 10min)
 
 ### Implementation details:
 
 - [x] Set up dev tools (eslint, prettier, jest, husky, CI/CD, README)
 - [x] CI: Split deploy to stage/prod into separate jobs so we can see the name in the summary.
-- [ ] Increase code coverage / add badges
+- [x] Rename repo & npm package to vreddit-bot
+- [x] Increase code coverage / add badges
 - [ ] Use async file operations & fix concurrency problems (globally unique file name?)
 - [ ] CI: Optimise so that we don't run checks twice on releases?
-- [ ] Maybe rename repo/npm package to vreddit-bot?
 - [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
 - [ ] Tune Azure max workers param
 - [ ] Try other hosting options to see if it's faster and/or cheaper:
@@ -37,6 +44,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
   - [ ] Azure Linux host
   - [ ] AWS Lambda
   - [ ] Google Cloud Functions
+- [ ] Collect stats on inline option chosen?
 
 [1]: https://dev.to/mbelsky/pair-husky-with-git-lfs-in-your-javascript-project-2kh0
 [2]: https://github.com/typicode/husky/issues/108
