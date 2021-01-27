@@ -101,7 +101,7 @@ describe('post.downloadAndSend', () => {
     height: stats.height,
     caption: title,
     reply_markup: {
-      inline_keyboard: [[{ text: 'Comments', url }]],
+      inline_keyboard: [[{ text: 'Source', url }]],
     },
   };
   const sendVideoArgs = ['sendVideo', videoParams, { video: stats.path }];

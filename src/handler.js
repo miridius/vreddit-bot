@@ -18,7 +18,7 @@ exports.message = async ({ text, chat, message_id }, _log) => {
       video: post.fileId,
       caption: post.title,
       reply_to_message_id: message_id,
-      ...post.commentsButton(),
+      ...post.sourceButton(),
     };
   }
 
@@ -43,10 +43,14 @@ exports.inline = async ({ query }, _log) => {
 
   // Send the results list
   if (post.fileId) {
-    const common = { video_file_id: post.fileId, ...post.commentsButton() };
+    const video_file_id = post.fileId;
+    const caption = post.title;
+    const src = post.sourceButton();
     return [
-      { ...common, title: `Send video "${post.title}"`, caption: post.title },
-      { ...common, title: `Send without caption` },
+      { title: `Send video "${post.title}"`, video_file_id, caption, ...src },
+      { title: `Send without caption`, video_file_id, ...src },
+      { title: `Send without source`, video_file_id, caption },
+      { title: `Send without caption or source (no context)`, video_file_id },
     ];
   }
 };

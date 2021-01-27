@@ -46,7 +46,7 @@ describe('handler.message', () => {
       () => expect(msgReply(text)).resolves.toEqual(expected),
       [VideoPost.findInText, [text], post],
       [post.getMissingInfo, []],
-      [post.commentsButton, [], { url }],
+      [post.sourceButton, [], { url }],
     );
   });
 
@@ -66,10 +66,12 @@ describe('handler.message', () => {
     // @ts-ignore
     const inlineReply = (query) => inline({ query, from: FROM }, log);
 
-    const fileId = `file ID for ${id}`;
+    const video_file_id = `file ID for ${id}`;
     const results = [
-      { title: `Send video "${title}"`, video_file_id: fileId, caption: title },
-      { title: `Send without caption`, video_file_id: fileId },
+      { title: `Send video "${title}"`, video_file_id, caption: title, url },
+      { title: `Send without caption`, video_file_id, url },
+      { title: `Send without source`, video_file_id, caption: title },
+      { title: `Send without caption or source (no context)`, video_file_id },
     ];
 
     it('returns immediately for empty queries', () =>
@@ -83,10 +85,11 @@ describe('handler.message', () => {
     });
 
     it('re-uses an existing file ID', async () => {
-      post.fileId = fileId;
+      post.fileId = video_file_id;
       await withFnMocks(
         () => expect(inlineReply(text)).resolves.toEqual(results),
         [VideoPost.findInText, [text], post],
+        [post.sourceButton, [], { url }],
       );
       expect(post.downloadAndSend).toHaveBeenCalledTimes(0);
     });
@@ -99,9 +102,10 @@ describe('handler.message', () => {
           post.downloadAndSend,
           [CACHE_CHAT],
           () => {
-            post.fileId = fileId;
+            post.fileId = video_file_id;
           },
         ],
+        [post.sourceButton, [], { url }],
       );
     });
 

@@ -85,7 +85,7 @@ class VideoPost {
         height,
         caption: this.title,
         reply_to_message_id: replyTo,
-        ...this.commentsButton(),
+        ...this.sourceButton(),
       },
       { video: path },
     );
@@ -94,10 +94,10 @@ class VideoPost {
     cache.write(this);
   }
 
-  commentsButton() {
+  sourceButton() {
     return {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Comments', url: this.url }]],
+        inline_keyboard: [[{ text: 'Source', url: this.url }]],
       },
     };
   }
