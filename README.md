@@ -19,6 +19,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [x] Add reddit post title as video caption
 - [x] Include link to source as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
 - [ ] If forwarding to the bot from a group chat, give a button to send the video back to that chat (e.g. via inline)
+- [ ] If title is already in group chat post, don't add it in the reply
 - [ ] If video is > 50 mb, try to use lower quality stream
 - [ ] Reply to /help with a short text about what the bot can do
 - [ ] Stop the bot sometimes asking for location info when using inline mode
