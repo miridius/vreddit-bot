@@ -59,7 +59,7 @@ const downloadVideo = async (id, httpProxy) => {
   // Get video dimensions from ffmpeg output
   const { width, height } = getOutputDimensions(ffmpegStderr);
   const { size } = statSync(path);
-  log.debug({ path, width, height, size });
+  log.debug('saved video:', { path, width, height, size });
   return { path, width, height, size };
 };
 

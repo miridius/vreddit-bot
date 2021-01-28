@@ -77,7 +77,7 @@ class VideoPost {
    * @param {number} [replyTo]
    */
   async sendVideo(chat, path, width, height, replyTo) {
-    const json = await telegram(
+    const result = await telegram(
       'sendVideo',
       {
         chat_id: chat.id,
@@ -89,7 +89,7 @@ class VideoPost {
       },
       { video: path },
     );
-    this.fileId = json?.result?.video?.file_id;
+    this.fileId = result?.video?.file_id;
     log.debug('fileId:', this.fileId);
     cache.write(this);
   }

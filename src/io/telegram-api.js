@@ -16,27 +16,27 @@ const processParams = (obj) =>
 /**
  * @param {string} method telegram bot API method
  * @param {Record<string, any>} [params] parameter:value map
- * @param {Record<string, import('fs').PathLike>} [fileParams]
+ * @param {Record<string, import('fs').PathLike>} [files]
  * parameter:filePath map (for uploading files)
  */
-module.exports = async (method, params = {}, fileParams) => {
-  log.info('Calling Telegram API method:', method);
-  log.debug('params:', params);
+module.exports = async (method, params = {}, files) => {
   params = processParams(params);
+  log.info('Calling Telegram API:', method, params);
   let res;
-  if (fileParams) {
-    log.debug('fileParams:', fileParams);
+  if (files) {
+    log.debug('sending file(s):', files);
     const form = new FormData();
     Object.entries(params).forEach(([k, v]) => form.append(k, v));
-    Object.entries(fileParams).forEach(([k, path]) =>
+    Object.entries(files).forEach(([k, path]) =>
       form.append(k, fs.createReadStream(path)),
     );
-    // console.log({ form });
     res = await fetch(`${API_URL}/${method}`, { method: 'post', body: form });
   } else {
     res = await fetch(`${API_URL}/${method}?${new URLSearchParams(params)}`);
   }
+  if (!res.ok) throw new Error(`Telegram API error: ${res.statusText}`);
   const json = await res.json();
+  log.debug('API response:', json);
   if (!json.ok) throw new Error(`Telegram API error: ${json.description}`);
-  return json;
+  return json.result;
 };

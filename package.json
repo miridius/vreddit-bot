@@ -10,6 +10,7 @@
   "private": "true",
   "scripts": {
     "start": "env-cmd func start",
+    "dev": "env-cmd npx nodemon dev/server",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "test": "jest --ci",
