@@ -1,4 +1,4 @@
-require('../helpers');
+const { env } = require('../helpers');
 const { getCommentsUrl, getPostData } = require('../../src/io/reddit-api');
 
 const nock = require('nock');
@@ -40,11 +40,11 @@ describe('reddit-api', () => {
     const url = redditUrls[i];
 
     it(`getCommentsUrl - ${id}`, () =>
-      expect(getCommentsUrl(id)).resolves.toEqual(url));
+      expect(getCommentsUrl({ env, id })).resolves.toEqual(url));
 
     let postData;
     it(`getPostData - ${url}`, async () => {
-      postData = await getPostData(url);
+      postData = await getPostData({ env, url });
       expect(postData).toEqual({
         title: titles[i],
         videoUrl: `https://v.redd.it/${id}`,

@@ -1,5 +1,11 @@
 /* eslint-disable jest/expect-expect */
-const { withFnMocks, setDefaultImpls, mocked } = require('../helpers');
+const {
+  withFnMocks,
+  setDefaultImpls,
+  mocked,
+  env,
+  fnMock,
+} = require('../helpers');
 const cache = require('../../src/io/file-cache');
 const VideoPost = require('../../src/video-post');
 const { resolve } = require('path');
@@ -27,22 +33,21 @@ describe('cache', () => {
   it('reads pre-existing files', () => {
     withFnMocks(
       () => expect(cache.read(id)).toEqual(data),
-      [fs.existsSync, [path], true],
-      [fs.readFileSync, [path, 'utf8'], dataString],
+      fnMock(fs.existsSync, [path], true),
+      fnMock(fs.readFileSync, [path, 'utf8'], dataString),
     );
   });
   it('returns false for non-existant files', () => {
-    withFnMocks(() => expect(cache.read(id)).toBe(false), [
-      fs.existsSync,
-      [path],
-      false,
-    ]);
+    withFnMocks(
+      () => expect(cache.read(id)).toBe(false),
+      fnMock(fs.existsSync, [path], false),
+    );
   });
   it('caches new data', () => {
     withFnMocks(
-      () => cache.write(new VideoPost(id, url, title, fileId)),
-      [fs.existsSync, [path], false],
-      [fs.writeFileSync, [path, dataString]],
+      () => cache.write(new VideoPost(env, id, url, title, fileId)),
+      fnMock(fs.existsSync, [path], false),
+      fnMock(fs.writeFileSync, [path, dataString]),
     );
   });
   it('updates & invalidates existing cache', () => {
@@ -50,17 +55,16 @@ describe('cache', () => {
     const title = 'title';
     const fileId = 'fileId';
     withFnMocks(
-      () => cache.write(new VideoPost(id, url, title, fileId)),
-      [fs.existsSync, [path], true],
-      [fs.readFileSync, [path, 'utf8'], dataString],
-      [fs.writeFileSync, [path, JSON.stringify({ url, title, fileId })]],
+      () => cache.write(new VideoPost(env, id, url, title, fileId)),
+      fnMock(fs.existsSync, [path], true),
+      fnMock(fs.readFileSync, [path, 'utf8'], dataString),
+      fnMock(fs.writeFileSync, [path, JSON.stringify({ url, title, fileId })]),
     );
   });
   it('skips caching if no fileId is available', () => {
-    withFnMocks(() => cache.write(new VideoPost(id, url, title)), [
-      fs.existsSync,
-      [path],
-      false,
-    ]);
+    withFnMocks(
+      () => cache.write(new VideoPost(env, id, url, title)),
+      fnMock(fs.existsSync, [path], false),
+    );
   });
 });

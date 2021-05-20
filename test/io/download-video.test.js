@@ -1,4 +1,4 @@
-const { createProxyServer, log } = require('../helpers');
+const { createProxyServer, log, env } = require('../helpers');
 const {
   downloadVideo,
   deleteIfExisting,
@@ -29,6 +29,7 @@ afterAll(() => {
 
 // TEST DATA
 const videoId = 'hf352syjjka61';
+const post = { env, id: videoId };
 
 const tempVideoFile = resolve(tmpdir(), `${videoId}.mp4`);
 
@@ -57,14 +58,14 @@ describe('downloadVideo', () => {
   it('saves video file from v.redd.it URL', async () => {
     _deleteIfExisting(tempVideoFile);
     await expect(
-      withNockback(downloadVideo)(videoId, `http://127.0.0.1:${PROXY_PORT}`),
+      withNockback(downloadVideo)(post, `http://127.0.0.1:${PROXY_PORT}`),
     ).resolves.toEqual({ path: tempVideoFile, size, width, height });
     expect(existsSync(tempVideoFile)).toBe(true);
     _deleteIfExisting(tempVideoFile);
   });
   it('throws an error in case of failure', async () => {
     return expect(
-      withNockback(downloadVideo)('does not exist!'),
+      withNockback(downloadVideo)({ env, id: 'does not exist!' }),
     ).rejects.toThrow(/Command failed/);
   });
 });
@@ -73,14 +74,14 @@ describe('deleteIfExisting', () => {
   it('deletes existing files and logs a warning', () => {
     const newFile = `${__filename}.tmp`;
     copyFileSync(__filename, newFile);
-    deleteIfExisting(newFile);
+    deleteIfExisting(env, newFile);
     expect(log.warn).toHaveBeenLastCalledWith(
       `${newFile} already exists, attempting to delete`,
     );
     expect(existsSync(newFile)).toBe(false);
   });
   it('ignores files that do not exist', () => {
-    expect(deleteIfExisting('does not exist')).toBeUndefined();
+    expect(deleteIfExisting(env, 'does not exist')).toBeUndefined();
   });
 });
 

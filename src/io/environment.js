@@ -36,17 +36,6 @@ const CACHE_CHAT = {
   all_members_are_administrators: true,
 };
 
-const { debug, info, warn, error } = console;
-const log = { debug, info, warn, error };
-
-/**
- * @param {import('serverless-telegram').Logger} logger
- */
-const setLogMethods = (logger) => {
-  const { verbose: debug, info, warn, error } = logger;
-  Object.assign(log, { debug, info, warn, error });
-};
-
 module.exports = {
   BOT_API_TOKEN,
   BOT_ERROR_CHAT_ID,
@@ -55,6 +44,4 @@ module.exports = {
   FFMPEG,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,
-  log,
-  setLogMethods,
 };

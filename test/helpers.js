@@ -1,4 +1,13 @@
+/* eslint-disable jest/no-standalone-expect */
 const http = require('http');
+
+/**
+ * @template T
+ * @param {T} val
+ * @returns {T extends (...args: any[]) => any ? jest.MockInstance<ReturnType<T>, Parameters<T>> : jest.Mocked<T>}
+ */
+// @ts-ignore
+const mocked = (val) => val;
 
 /** @type import('serverless-telegram').Chat */
 const CHAT = {
@@ -8,6 +17,8 @@ const CHAT = {
   username: 'DavidRolle',
   type: 'private',
 };
+/** @type import('serverless-telegram').User */
+// @ts-ignore
 const FROM = { ...CHAT, is_bot: false, language_code: 'en' };
 process.env.BOT_ERROR_CHAT_ID = CHAT.id.toString();
 process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN || '54321:fake_token';
@@ -20,11 +31,22 @@ const log = Object.assign(jest.fn(), {
   warn: jest.fn(),
   error: jest.fn(),
 });
-require('../src/io/environment').setLogMethods(log);
 
 /** @type import("serverless-telegram").Context */
 // @ts-ignore
 const ctx = { log };
+
+/** @type import("serverless-telegram").Env */
+// @ts-ignore
+const _env = {
+  context: ctx,
+  debug: log.verbose,
+  info: log.info,
+  warn: log.warn,
+  error: log.error,
+  send: jest.fn(),
+};
+const env = mocked(_env);
 
 // note this does not start the server, to do so call .listen(port).
 const createProxyServer = () =>
@@ -39,14 +61,6 @@ const createProxyServer = () =>
         { end: true },
       );
   });
-
-/**
- * @template T
- * @param {T} val
- * @returns {T extends (...args: any[]) => any ? jest.MockInstance<T> : jest.Mocked<T>}
- */
-// @ts-ignore
-const mocked = (val) => val;
 
 /**
  * @param {string} name
@@ -69,6 +83,9 @@ const setDefaultImpls = (...mockModules) => {
 };
 
 const after = (retValOrPromise, codeToRun) => {
+  /**
+   * @param {any} r
+   */
   const passThroughRetVal = (r) => {
     codeToRun();
     return r;
@@ -78,6 +95,10 @@ const after = (retValOrPromise, codeToRun) => {
     : passThroughRetVal(retValOrPromise);
 };
 
+/**
+ * @param {{ (): void; (): void; (): void; (): any; }} fn
+ * @param {string} message
+ */
 const expectWithMessage = (fn, message) => {
   try {
     return fn();
@@ -87,32 +108,92 @@ const expectWithMessage = (fn, message) => {
 };
 
 /**
- * @param {() => any} testFn
- * @param {Array<[jest.MockInstance, any[], any?]>} mockSpecs
+ * @template {any[]} A, R
+ * @typedef {{
+ *   fn: jest.MockInstance<R, A>,
+ *   args?: A,
+ *   retVal?: R | ((...args: A) => R)
+ * }} FnMock
  */
-const withFnMocks = (testFn, ...mockSpecs) => {
+
+// /**
+//  * @param {() => any} testFn
+//  */
+// const mockTest = (testFn) => ({
+//   _testFn: testFn,
+//   /** @type {FnMock<any[], any>[]} */
+//   _fnMocks: [],
+//   _numCalls: 0,
+
+//   /**
+//    * @template {any[]} A, R
+//    * @param {jest.MockInstance<R, A>} fn
+//    * @param {A} args
+//    * @param {R} [retVal]
+//    */
+//   mock(fn, args, retVal) {
+//     /** @type {FnMock<A, R>} */
+//     const fnMock = { fn, args, retVal };
+//     this._fnMocks.push(fnMock);
+//     fn.mockImplementationOnce((...calledArgs) => {
+//       expectWithMessage(
+//         () => expect(calledArgs).toEqual(args),
+//         `Function "${fn.getMockName()}" called with incorrect args`,
+//       );
+//       expectWithMessage(
+//         () => expect(++this._numCalls).toBe(this._fnMocks.length),
+//         `Function "${fn.getMockName()}" called in the wrong order`,
+//       );
+//       return typeof retVal === 'function' ? retVal(...calledArgs) : retVal;
+//     });
+//     return this;
+//   },
+
+//   run() {
+//     const result = this.testFn();
+//     return after(result, () =>
+//       expectWithMessage(
+//         () => expect(this._numCalls).toBe(this._fnMocks.length),
+//         'Not all mocked functions were called',
+//       ),
+//     );
+//   },
+// });
+
+/**
+ * @template {any[]} A, R
+ * @param {jest.MockInstance<R, A> | ((...args: A) => R)} fn
+ * @param {A} [args]
+ * @param {R | ((...args: A) => R)} [retVal]
+ * @returns {FnMock<A, R>}
+ */
+const fnMock = (fn, args, retVal) => ({ fn: mocked(fn), args, retVal });
+
+/**
+ * @param {() => any} testFn
+ * @param {FnMock<any[], any>[]} fnMocks
+ */
+const withFnMocks = (testFn, ...fnMocks) => {
   // skip any empty/falsy specs
-  mockSpecs = mockSpecs.filter((spec) => spec?.[0]);
+  fnMocks = fnMocks.filter((spec) => spec?.fn);
   let numCalls = 0;
-  mockSpecs.forEach(([mockFn, mockArgs, mockReturn], i) => {
-    mockFn.mockImplementationOnce((...args) => {
+  fnMocks.forEach(({ fn, args, retVal }, i) => {
+    fn.mockImplementationOnce((...testArgs) => {
       expectWithMessage(
-        () => expect(args).toEqual(mockArgs),
-        `Function "${mockFn.getMockName()}" called with incorrect args`,
+        () => args && expect(testArgs).toEqual(args),
+        `Function "${fn.getMockName()}" called with incorrect args`,
       );
       expectWithMessage(
         () => expect(++numCalls).toBe(i + 1),
-        `Function "${mockFn.getMockName()}" called in the wrong order`,
+        `Function "${fn.getMockName()}" called in the wrong order`,
       );
-      return typeof mockReturn === 'function'
-        ? mockReturn(...args)
-        : mockReturn;
+      return typeof retVal === 'function' ? retVal(...testArgs) : retVal;
     });
   });
   const result = testFn();
   return after(result, () =>
     expectWithMessage(
-      () => expect(numCalls).toBe(mockSpecs.length),
+      () => expect(numCalls).toBe(fnMocks.length),
       'Not all mocked functions were called',
     ),
   );
@@ -127,9 +208,11 @@ module.exports = {
   CHAT,
   createProxyServer,
   ctx,
+  env,
   FROM,
   log,
   mocked,
   setDefaultImpls,
+  fnMock,
   withFnMocks,
 };

@@ -10,19 +10,19 @@
   "private": "true",
   "scripts": {
     "start": "env-cmd func start",
-    "dev": "env-cmd npx nodemon dev/server",
+    "dev": "nodemon -x env-cmd start-dev-server",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "test": "jest --ci",
     "test:watch": "jest --clearCache && jest --watchAll --runInBand",
-    "test:update": "env-cmd jest -u",
+    "test:update": "npx env-cmd jest -u",
     "update-deps": "npx ncu -e2 || (npx ncu -u && yarn install && yarn lint && yarn test)",
     "release": "npx ncu -e2 && npx np --no-publish"
   },
   "dependencies": {
     "form-data": "^3.0.0",
     "node-fetch": "^2.6.1",
-    "serverless-telegram": "^0.3.2"
+    "serverless-telegram": "^0.4.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",

@@ -1,8 +1,9 @@
-const { log, MAX_FILE_SIZE_BYTES } = require('./io/environment');
+const { MAX_FILE_SIZE_BYTES } = require('./io/environment');
 const cache = require('./io/file-cache');
 const reddit = require('./io/reddit-api');
-const telegram = require('./io/telegram-api');
+// const telegram = require('./io/telegram-api');
 const { downloadVideo } = require('./io/download-video');
+const { createReadStream } = require('fs');
 
 const idRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
 const urlRegex = /https?:\/\/www\.reddit\.com\/r\/\w+\/comments\/\w+\/\w+\/?/;
@@ -12,30 +13,39 @@ const findId = (text) => text?.match(idRegex)?.[1];
 const findUrl = (text) => text?.match(urlRegex)?.[0];
 
 class VideoPost {
-  /** @param {string} [text] */
-  static async findInText(text) {
+  /**
+   * @param {import('serverless-telegram').Env} env
+   * @param {string} [text]
+   */
+  static async findInText(env, text) {
     if (!text) return;
     const id = findId(text);
-    return id ? new VideoPost(id) : VideoPost.fromUrl(findUrl(text));
-  }
-
-  /** @param {string} [url] */
-  static async fromUrl(url) {
-    if (!url) return;
-    const { videoUrl, title } = await reddit.getPostData(url);
-    const id = findId(videoUrl);
-    if (id) return new VideoPost(id, url, title);
+    return id ? new VideoPost(env, id) : VideoPost.fromUrl(env, findUrl(text));
   }
 
   /**
+   * @param {import('serverless-telegram').Env} env
+   * @param {string} [url]
+   */
+  static async fromUrl(env, url) {
+    if (!url) return;
+    const { videoUrl, title } = await reddit.getPostData({ env, url });
+    const id = findId(videoUrl);
+    if (id) return new VideoPost(env, id, url, title);
+  }
+
+  /**
+   * @param {import('serverless-telegram').Env} env
    * @param {string} id
    * @param {string} [url]
    * @param {string} [title]
    * @param {string} [fileId]
    */
-  constructor(id, url, title, fileId) {
+  constructor(env, id, url, title, fileId) {
+    this.env = env;
     this.id = id;
-    const cachedInfo = cache.read(this.id);
+    const cachedInfo = cache.read(id);
+    if (cachedInfo) env.info('Found existing video info for', id, cachedInfo);
     this.url = url || cachedInfo.url;
     this.title = title || cachedInfo.title;
     this.fileId = fileId || cachedInfo.fileId;
@@ -47,12 +57,12 @@ class VideoPost {
    */
   async downloadAndSend(chat, replyTo) {
     const [{ path, width, height, size }] = await Promise.all([
-      downloadVideo(this.id),
+      downloadVideo(this),
       this.getMissingInfo(),
     ]);
     if (size > MAX_FILE_SIZE_BYTES) {
       const text = `Video too large (${(size / 1024 / 1024).toFixed(2)} MB)`;
-      log.error(text);
+      this.env.error(text);
       return chat.type === 'private' && { text, reply_to_message_id: replyTo };
     }
     // Send the video to telegram
@@ -61,10 +71,10 @@ class VideoPost {
 
   async getMissingInfo() {
     if (!this.url) {
-      this.url = await reddit.getCommentsUrl(this.id);
+      this.url = await reddit.getCommentsUrl(this);
     }
     if (this.url && !this.title) {
-      this.title = (await reddit.getPostData(this.url)).title;
+      this.title = (await reddit.getPostData(this)).title;
       cache.write(this);
     }
   }
@@ -77,20 +87,17 @@ class VideoPost {
    * @param {number} [replyTo]
    */
   async sendVideo(chat, path, width, height, replyTo) {
-    const result = await telegram(
-      'sendVideo',
-      {
-        chat_id: chat.id,
-        width,
-        height,
-        caption: this.title,
-        reply_to_message_id: replyTo,
-        ...this.sourceButton(),
-      },
-      { video: path },
-    );
+    const result = await this.env.send({
+      chat_id: chat.id,
+      video: path,
+      width,
+      height,
+      caption: this.title,
+      reply_to_message_id: replyTo,
+      ...this.sourceButton(),
+    });
     this.fileId = result?.video?.file_id;
-    log.debug('fileId:', this.fileId);
+    this.env.debug('fileId:', this.fileId);
     cache.write(this);
   }
 

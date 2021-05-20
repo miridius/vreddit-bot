@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@azure/functions@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@azure/functions/-/functions-1.2.2.tgz#8fcb6aa3a879d3be0dc3d68919f969b054bbe3f3"
-  integrity sha512-p/dDHq1sG/iAib+eDY4NxskWHoHW1WFzD85s0SfWxc2wVjJbxB0xz/zBF4s7ymjVgTu+0ceipeBk+tmpnt98oA==
+"@azure/functions@^1.2.3":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@azure/functions/-/functions-1.2.3.tgz#65765837e7319eedffbf8a971cb2f78d4e043d54"
+  integrity sha512-dZITbYPNg6ay6ngcCOjRUh1wDhlFITS0zIkqplyH5KfKEAVPooaoaye5mUFnR+WP9WdGRjlNXyl/y2tgWKHcRg==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.11":
   version "7.12.11"
@@ -3725,12 +3725,14 @@ semver@^7.2.1, semver@^7.3.2:
   dependencies:
     lru-cache "^6.0.0"
 
-serverless-telegram@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.3.2.tgz#5051c4ceb9a7e66ca47b95e69dfafec8ac68b901"
-  integrity sha512-jUvNjDRwIOEMJHZxgrIdh8TS4tTedjGU4fuRzZ3UC0XpztaMi9kht+2+lnuJXVB34wpiEL2FfYUAB0EKf+Nh6w==
+serverless-telegram@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/serverless-telegram/-/serverless-telegram-0.4.0.tgz#04687951305231f4e1b657a524a71234bb4ae8f5"
+  integrity sha512-IPkK9UTQszcVCU4rFp681neq/xmwhm+9NVA7r9OGozllJYIdZeDm1UKXR5x9KfZ69VNMu2VyW8VMllh+NUaQ1g==
   dependencies:
-    "@azure/functions" "^1.2.2"
+    "@azure/functions" "^1.2.3"
+    form-data "^3.0.0"
+    node-fetch "^2.6.1"
 
 set-blocking@^2.0.0:
   version "2.0.0"

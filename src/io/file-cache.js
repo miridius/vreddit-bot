@@ -1,6 +1,6 @@
 const { existsSync, writeFileSync, readFileSync } = require('fs');
 const { resolve } = require('path');
-const { log, CACHE_DIR } = require('./environment');
+const { CACHE_DIR } = require('./environment');
 
 /** @param {string} id video ID */
 const getPath = (id) => resolve(CACHE_DIR, `${id}.json`);
@@ -8,14 +8,12 @@ const getPath = (id) => resolve(CACHE_DIR, `${id}.json`);
 /** @param {string} id video ID */
 exports.read = (id) => {
   const path = getPath(id);
-  const data = existsSync(path) && JSON.parse(readFileSync(path, 'utf8'));
-  if (data) log.info('Found existing video info for', id, data);
-  return data;
+  return existsSync(path) && JSON.parse(readFileSync(path, 'utf8'));
 };
 
 /** @param {import('../video-post')} post */
 exports.write = ({ id, url, title, fileId }) => {
+  // if the video is not sent we can skip caching (it will happen again later)
   if (!fileId) return;
-  const path = getPath(id);
-  writeFileSync(path, JSON.stringify({ url, title, fileId }));
+  writeFileSync(getPath(id), JSON.stringify({ url, title, fileId }));
 };
