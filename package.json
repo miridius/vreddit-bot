@@ -21,7 +21,7 @@
   "dependencies": {
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.1",
-    "serverless-telegram": "^0.4.0"
+    "serverless-telegram": "^0.5.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
