@@ -1,3 +1,4 @@
+const { existsSync, mkdirSync } = require('fs');
 const os = require('os');
 const { resolve } = require('path');
 
@@ -27,6 +28,7 @@ if (isNaN(BOT_ERROR_CHAT_ID)) {
   throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
 }
 const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), 'data');
+if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR);
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
