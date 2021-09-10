@@ -1,4 +1,4 @@
-const { CHAT, FROM, mocked, withFnMocks, log } = require('./helpers');
+const { CHAT, FROM, mocked, withFnMocks, log, env } = require('./helpers');
 const { message, inline } = require('../src/handler');
 const { CACHE_CHAT } = require('../src/io/environment');
 
@@ -24,7 +24,7 @@ beforeEach(() => {
 describe('handler.message', () => {
   const message_id = 42;
   // @ts-ignore
-  const msgReply = (text) => message({ text, chat: CHAT, message_id }, log);
+  const msgReply = (text) => message({ text, chat: CHAT, message_id }, env);
 
   it('ignores messages without v.redd.it links', () => {
     return withFnMocks(

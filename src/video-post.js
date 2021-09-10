@@ -5,7 +5,8 @@ const telegram = require('./io/telegram-api');
 const { downloadVideo } = require('./io/download-video');
 
 const idRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
-const urlRegex = /https?:\/\/(www\.)?reddit\.com\/r\/\w+\/comments\/\w+\/\w+\/?/;
+const urlRegex =
+  /https?:\/\/(www\.)?reddit\.com\/r\/\w+\/comments\/\w+\/\w+\/?/;
 /** @param {string} [text] */
 const findId = (text) => text?.match(idRegex)?.[1];
 /** @param {string} [text] */

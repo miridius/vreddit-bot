@@ -39,8 +39,7 @@ describe('VideoPost.findInText / fromUrl', () => {
           fileId: undefined,
           id: 's090h1f828b61',
           title: 'Blah blah blah blah...',
-          url:
-            'https://www.reddit.com/r/AnimalsBeingDerps/comments/kwxvu7/blah_blah_blah_blah/',
+          url: 'https://www.reddit.com/r/AnimalsBeingDerps/comments/kwxvu7/blah_blah_blah_blah/',
         }),
       [reddit.getPostData, [url], { title, videoUrl }],
       [cache.read, [id], false],

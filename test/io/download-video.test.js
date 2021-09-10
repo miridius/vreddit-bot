@@ -44,14 +44,16 @@ const _deleteIfExisting = (f) => existsSync(f) && unlinkSync(f);
  * @param {(...args: Args) => Promise<Ret>} fn
  * @returns {(...args: Args) => Promise<Ret>} fn
  */
-const withNockback = (fn) => async (...args) => {
-  const fixture = `${filenamify(expect.getState().currentTestName)}.json`;
-  const { nockDone, context } = await nock.back(fixture);
-  const result = await fn(...args);
-  nockDone();
-  context.assertScopesFinished();
-  return result;
-};
+const withNockback =
+  (fn) =>
+  async (...args) => {
+    const fixture = `${filenamify(expect.getState().currentTestName)}.json`;
+    const { nockDone, context } = await nock.back(fixture);
+    const result = await fn(...args);
+    nockDone();
+    context.assertScopesFinished();
+    return result;
+  };
 
 describe('downloadVideo', () => {
   it('saves video file from v.redd.it URL', async () => {

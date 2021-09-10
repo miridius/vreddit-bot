@@ -32,11 +32,10 @@ describe('cache', () => {
     );
   });
   it('returns false for non-existant files', () => {
-    withFnMocks(() => expect(cache.read(id)).toBe(false), [
-      fs.existsSync,
-      [path],
-      false,
-    ]);
+    withFnMocks(
+      () => expect(cache.read(id)).toBe(false),
+      [fs.existsSync, [path], false],
+    );
   });
   it('caches new data', () => {
     withFnMocks(
@@ -57,10 +56,9 @@ describe('cache', () => {
     );
   });
   it('skips caching if no fileId is available', () => {
-    withFnMocks(() => cache.write(new VideoPost(id, url, title)), [
-      fs.existsSync,
-      [path],
-      false,
-    ]);
+    withFnMocks(
+      () => cache.write(new VideoPost(id, url, title)),
+      [fs.existsSync, [path], false],
+    );
   });
 });

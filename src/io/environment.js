@@ -42,8 +42,7 @@ const log = { debug, info, warn, error };
 /**
  * @param {import('serverless-telegram').Logger} logger
  */
-const setLogMethods = (logger) => {
-  const { verbose: debug, info, warn, error } = logger;
+const setLogMethods = ({ debug, info, warn, error }) => {
   Object.assign(log, { debug, info, warn, error });
 };
 
