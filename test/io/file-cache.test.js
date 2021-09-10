@@ -1,5 +1,5 @@
 /* eslint-disable jest/expect-expect */
-const { withFnMocks, setDefaultImpls, mocked } = require('../helpers');
+const { withFnMocks, setDefaultImpls, mocked, env } = require('../helpers');
 const cache = require('../../src/io/file-cache');
 const VideoPost = require('../../src/video-post');
 const { resolve } = require('path');
@@ -39,7 +39,7 @@ describe('cache', () => {
   });
   it('caches new data', () => {
     withFnMocks(
-      () => cache.write(new VideoPost(id, url, title, fileId)),
+      () => cache.write(new VideoPost(env, id, url, title, fileId)),
       [fs.existsSync, [path], false],
       [fs.writeFileSync, [path, dataString]],
     );
@@ -49,7 +49,7 @@ describe('cache', () => {
     const title = 'title';
     const fileId = 'fileId';
     withFnMocks(
-      () => cache.write(new VideoPost(id, url, title, fileId)),
+      () => cache.write(new VideoPost(env, id, url, title, fileId)),
       [fs.existsSync, [path], true],
       [fs.readFileSync, [path, 'utf8'], dataString],
       [fs.writeFileSync, [path, JSON.stringify({ url, title, fileId })]],
@@ -57,7 +57,7 @@ describe('cache', () => {
   });
   it('skips caching if no fileId is available', () => {
     withFnMocks(
-      () => cache.write(new VideoPost(id, url, title)),
+      () => cache.write(new VideoPost(env, id, url, title)),
       [fs.existsSync, [path], false],
     );
   });
