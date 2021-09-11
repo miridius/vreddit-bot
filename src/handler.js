@@ -1,10 +1,10 @@
-const { CACHE_CHAT, OS_INFO, setLogMethods, log } = require('./io/environment');
+const { CACHE_CHAT, OS_INFO, setLogMethods } = require('./io/environment');
 const VideoPost = require('./video-post');
 
 /** @type import('serverless-telegram').MessageHandler */
 exports.message = async ({ text, chat, message_id }, env) => {
   setLogMethods(env);
-  log.debug('Running on', OS_INFO);
+  env.debug('Running', process.title, process.version, 'on', OS_INFO);
 
   // Check message for a v.redd.it link or reddit comments link
   const post = await VideoPost.findInText(env, text);

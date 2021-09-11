@@ -6,7 +6,7 @@ const { resolve } = require('path');
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 // string describing the runtime OS
-const OS_INFO = [os.platform(), os.arch(), os.type(), os.version()].join(' ');
+const OS_INFO = `${os.platform()} ${os.arch()} (${os.type()} ${os.version()})`;
 
 // path to ffmpeg executable
 const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
