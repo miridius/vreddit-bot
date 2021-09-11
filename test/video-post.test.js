@@ -104,6 +104,7 @@ describe('post.downloadAndSend', () => {
   const stats = { path: 'path', width: 100, height: 200, size: 1024 };
   const bigFileStats = { ...stats, size: MAX_FILE_SIZE_BYTES * 2 };
   const sendVideoParams = {
+    chat_id: CHAT.id,
     video: stats.path,
     width: stats.width,
     height: stats.height,

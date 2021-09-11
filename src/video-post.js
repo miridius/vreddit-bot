@@ -64,7 +64,7 @@ class VideoPost {
       return chat.type === 'private' && { text, reply_to_message_id: replyTo };
     }
     // Send the video to telegram
-    return this.sendVideo(path, width, height, replyTo);
+    return this.sendVideo(chat, path, width, height, replyTo);
   }
 
   async getMissingInfo() {
@@ -78,13 +78,15 @@ class VideoPost {
   }
 
   /**
+   * @param {import('serverless-telegram').Chat} chat
    * @param {import('fs').PathLike} path
    * @param {number} [width]
    * @param {number} [height]
    * @param {number} [replyTo]
    */
-  async sendVideo(path, width, height, replyTo) {
+  async sendVideo(chat, path, width, height, replyTo) {
     const result = await this.env.send({
+      chat_id: chat.id,
       video: path,
       width,
       height,
