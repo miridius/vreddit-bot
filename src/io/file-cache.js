@@ -1,21 +1,22 @@
+const filenamify = require('filenamify');
 const { existsSync, writeFileSync, readFileSync } = require('fs');
 const { resolve } = require('path');
 const { log, CACHE_DIR } = require('./environment');
 
-/** @param {string} id video ID */
-const getPath = (id) => resolve(CACHE_DIR, `${id}.json`);
+/** @param {string} url video URL */
+const getPath = (url) => resolve(CACHE_DIR, `${filenamify(url)}.json`);
 
-/** @param {string} id video ID */
-exports.read = (id) => {
-  const path = getPath(id);
+/** @param {string} url video URL */
+exports.read = (url) => {
+  const path = getPath(url);
   const data = existsSync(path) && JSON.parse(readFileSync(path, 'utf8'));
-  if (data) log.info('Found existing video info for', id, data);
+  if (data) log.info('Found existing video info for', url, data);
   return data;
 };
 
 /** @param {import('../video-post')} post */
-exports.write = ({ id, url, title, fileId }) => {
+exports.write = ({ url, redditUrl, title, fileId }) => {
   if (!fileId) return;
-  const path = getPath(id);
-  writeFileSync(path, JSON.stringify({ url, title, fileId }));
+  const path = getPath(url);
+  writeFileSync(path, JSON.stringify({ url: redditUrl, title, fileId }));
 };

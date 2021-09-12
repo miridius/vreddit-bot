@@ -33,7 +33,10 @@ const log = Object.assign(jest.fn(), {
 // @ts-ignore
 const ctx = { log };
 
+// @ts-ignore
+// const env = new MessageEnv(ctx, { chat: CHAT });
 const env = new Env(ctx);
+
 require('../src/io/environment').setLogMethods(env);
 
 // note this does not start the server, to do so call .listen(port).
@@ -141,6 +144,7 @@ module.exports = {
   FROM,
   log,
   mocked,
+  setDefaultImpl,
   setDefaultImpls,
   withFnMocks,
 };

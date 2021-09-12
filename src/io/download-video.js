@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const { existsSync, unlinkSync, statSync } = require('fs');
 const { tmpdir } = require('os');
 const { resolve } = require('path');
+const filenamify = require('filenamify');
 
 /** @param {import('fs').PathLike} videoFile */
 const deleteIfExisting = (videoFile) => {
@@ -47,11 +48,16 @@ const getOutputDimensions = (ffmpegStderr) => {
 
 /**
  * Downloads a video using ffmpeg, returns the output path and some statistics
- * @param {string} id v.redd.it video ID
+ * @param {import('../video-post')} post VideoPost created from a URL (which may or may not be a video)
  * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
+ * @returns {Promise<{path: string, width?: number, height?: number, size: number} | void>}
  */
-const downloadVideo = async (id, httpProxy) => {
-  const path = resolve(tmpdir(), `${id}.mp4`);
+const downloadVideo = async (post, httpProxy) => {
+  const id = post.getVredditId();
+  // only v.redd.it URLs are supported currently
+  if (!id) return;
+  // Define a temp file path based on the video URL
+  const path = resolve(tmpdir(), `${filenamify(post.url)}.mp4`);
   // Delete the video if it exists in case it is from a failed previous execution
   deleteIfExisting(path);
   // Use ffmpeg to save the video to a temp file at source quality
