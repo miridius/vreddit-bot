@@ -1,30 +1,40 @@
 const http = require('http');
+const { Env } = require('serverless-telegram');
 
-/** @type import('serverless-telegram').Chat */
-const CHAT = {
+/** @type import('serverless-telegram').User */
+const FROM = {
   id: parseInt(process.env.BOT_ERROR_CHAT_ID || '123456') || 123456,
   first_name: 'Dave',
   last_name: 'Rolle',
   username: 'DavidRolle',
+  is_bot: false,
+  language_code: 'en',
+};
+
+/** @type import('serverless-telegram').Chat */
+const CHAT = {
+  ...FROM,
   type: 'private',
 };
-const FROM = { ...CHAT, is_bot: false, language_code: 'en' };
+
 process.env.BOT_ERROR_CHAT_ID = CHAT.id.toString();
 process.env.BOT_API_TOKEN = process.env.BOT_API_TOKEN || '54321:fake_token';
 process.env.HOME = process.env.HOME || __dirname;
 
-/** @type import("serverless-telegram").Logger */
+/** @type import("serverless-telegram").AzureLogger */
 const log = Object.assign(jest.fn(), {
   verbose: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),
 });
-require('../src/io/environment').setLogMethods(log);
 
-/** @type import("serverless-telegram").Context */
+/** @type import("serverless-telegram").AzureContext */
 // @ts-ignore
 const ctx = { log };
+
+const env = new Env(ctx);
+require('../src/io/environment').setLogMethods(env);
 
 // note this does not start the server, to do so call .listen(port).
 const createProxyServer = () =>
@@ -127,6 +137,7 @@ module.exports = {
   CHAT,
   createProxyServer,
   ctx,
+  env,
   FROM,
   log,
   mocked,

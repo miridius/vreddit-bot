@@ -1,3 +1,4 @@
+const { existsSync, mkdirSync } = require('fs');
 const os = require('os');
 const { resolve } = require('path');
 
@@ -5,7 +6,7 @@ const { resolve } = require('path');
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 // string describing the runtime OS
-const OS_INFO = [os.platform(), os.arch(), os.type(), os.version()].join(' ');
+const OS_INFO = `${os.platform()} ${os.arch()} (${os.type()} ${os.version()})`;
 
 // path to ffmpeg executable
 const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
@@ -26,7 +27,8 @@ const BOT_ERROR_CHAT_ID = parseInt(loadEnvOrThrow('BOT_ERROR_CHAT_ID'));
 if (isNaN(BOT_ERROR_CHAT_ID)) {
   throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
 }
-const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), 'data');
+const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), '.vreddit-bot-cache');
+if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR);
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
@@ -42,8 +44,7 @@ const log = { debug, info, warn, error };
 /**
  * @param {import('serverless-telegram').Logger} logger
  */
-const setLogMethods = (logger) => {
-  const { verbose: debug, info, warn, error } = logger;
+const setLogMethods = ({ debug, info, warn, error }) => {
   Object.assign(log, { debug, info, warn, error });
 };
 

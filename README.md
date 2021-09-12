@@ -35,6 +35,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [x] CI: Split deploy to stage/prod into separate jobs so we can see the name in the summary.
 - [x] Rename repo & npm package to vreddit-bot
 - [x] Increase code coverage / add badges
+- [x] Local dev server
 - [ ] Use async file operations & fix concurrency problems (globally unique file name?)
 - [ ] CI: Optimise so that we don't run checks twice on releases?
 - [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
@@ -52,35 +53,45 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 ## Development
 
-### Initial Setup
+### Getting Started
 
 1. Prerequisites:
 
    - Git
-   - Node.js v14 (must be 14 to match the version in Azure)
-   - Yarn
+   - Node.js v14 (it must be 14 to match the version in Azure/AWS).  
+      _Tip: You can install & manage multiple Node versions using tools like [nodist](https://github.com/nullivex/nodist) (Windows) or [n](https://github.com/tj/n) (Linux/MacOS/WSL)_
+   - [Yarn](https://yarnpkg.com/)
 
 1. `git clone` the repo and `cd` into it
 
-1. Run `yarn install` to install dependencies
+1. Run `yarn install` to install all dependencies
 
 1. Create a `.env` file in the root of the project with the following params:
+
    ```properties
-   BOT_ERROR_CHAT_ID=<your telegram chat ID (look for it in a bot update)>
-   BOT_API_TOKEN=<your bot token (ideally not the production bot)>
+   BOT_ERROR_CHAT_ID=<your telegram chat ID>
+   BOT_API_TOKEN=<your personal dev bot API token>
    ```
 
-### Commands
+   - If you don't konw your telegram chat ID, don't worry. Just set it to 0 and update it later once you've found out your ID from the bot logs.
+   - If you don't have a spare bot you can use for local development, make a new bot using the botfather. Don't try use a bot that you are already using for something else, it won't work.
+
+1. Run `yarn dev` to start local dev server. You can now message your dev bot in telegram to test your code.
+
+### Common Commands
 
 ```sh
-# Run function locally in watch mode:
-yarn start
+# Run a local bot server connected to the bot configured in the `.env` file:
+yarn dev
 
 # Run all tests in watch mode:
 yarn test:watch
 
 # Auto fix lint/formatting issues (where possible):
 yarn lint:fix
+
+# Run the Azure function locally in watch mode:
+yarn start
 ```
 
 ### CI/CD
