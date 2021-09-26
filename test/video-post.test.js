@@ -12,7 +12,7 @@ const { MAX_FILE_SIZE_BYTES } = require('../src/io/environment');
 jest.mock('../src/io/file-cache');
 jest.mock('../src/io/download-video');
 jest.mock('../src/io/reddit-api');
-const cache = mocked(require('../src/io/file-cache'));
+const cache = mocked(require('../src/io/ddb-cache'));
 const { downloadVideo } = mocked(require('../src/io/download-video'));
 const reddit = mocked(require('../src/io/reddit-api'));
 

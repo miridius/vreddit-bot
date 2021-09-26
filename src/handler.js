@@ -4,10 +4,11 @@ const VideoPost = require('./video-post');
 /** @type import('serverless-telegram').MessageHandler */
 exports.message = async ({ text, chat, message_id, entities }, env) => {
   if (!text) return;
-
   setLogMethods(env);
+
   env.debug('Running Node.js', process.version, 'on', OS_INFO);
 
+  // Find all URLs in the message
   const urls =
     entities
       ?.filter((e) => e.type === 'url')
@@ -15,13 +16,13 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
   env.debug('urls:', urls);
   if (!urls?.length) return;
 
-  // Find all URLs in the message
-  const posts = await VideoPost.fromUrls(env, urls);
-
   // try to download (or load from cache) each one
   const results = await Promise.all(
-    posts.map(async (post) => {
+    urls.map(async (url) => {
+      const post = await VideoPost.fromUrl(env, url);
+
       // Check if we can re-use an existing file
+      await post.loadCachedDetails();
       if (post.fileId) {
         await post.getMissingInfo();
         return {
@@ -64,6 +65,7 @@ exports.inline = async ({ query }, env) => {
   // Try each one until one works
   for (const post of posts) {
     // Check if we can re-use an existing file, otherwise upload it to CACHE_CHAT
+    await post.loadCachedDetails();
     if (!post.fileId) await post.downloadAndSend(CACHE_CHAT);
 
     // If we have an existing file ID or download succeeded, return the inline query result

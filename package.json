@@ -8,8 +8,12 @@
   },
   "license": "UNLICENSED",
   "private": "true",
+  "files": [
+    "src",
+    "ffmpeg"
+  ],
   "scripts": {
-    "dev": "nodemon -x env-cmd start-dev-server",
+    "dev": "nodemon -x env-cmd start-dev-server src/webhook.webhook",
     "start": "env-cmd func start",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
@@ -17,9 +21,14 @@
     "test:watch": "jest --watchAll --runInBand --no-cache",
     "test:update": "env-cmd jest -u",
     "update-deps": "ncu -u -x husky --doctor && yarn lint:fix && ncu -u -t minor --doctor && yarn lint",
-    "release": "ncu -e2 -t minor && npx np --no-publish"
+    "release": "ncu -e2 -t minor && npx np --no-publish",
+    "deploy": "sam build && env-cmd -f .env.staging npm run sam-deploy && npm run logs",
+    "sam-deploy": "sam deploy --config-env $SAM_ENV --parameter-overrides BotApiToken=$BOT_API_TOKEN BotErrorChatId=$BOT_ERROR_CHAT_ID CacheTableName=$CACHE_TABLE_NAME",
+    "logs": "env-cmd -f .env.staging npm run sam-logs",
+    "sam-logs": "sam logs --config-env $SAM_ENV -t"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.32.0",
     "filenamify": "^4.3.0",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.2",

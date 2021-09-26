@@ -1,4 +1,3 @@
-const { existsSync, mkdirSync } = require('fs');
 const os = require('os');
 const { resolve } = require('path');
 
@@ -15,20 +14,25 @@ const FFMPEG =
   resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
 
 // Load constants from environment variables, throw an error if they are missing
-/** @param {string} key */
-const loadEnvOrThrow = (key) => {
+/**
+ * @param {string} key
+ */
+const loadEnvOrThrow = (key, toInteger = false) => {
   const value = process.env[key];
   if (!value) throw new Error(`${key} environment variable not set!`);
+  if (toInteger) {
+    const intValue = parseInt(value);
+    if (isNaN(intValue)) {
+      throw new Error(`${key} env var is not a valid integer: ${value}`);
+    }
+    return intValue;
+  }
   return value;
 };
 const BOT_API_TOKEN = loadEnvOrThrow('BOT_API_TOKEN');
-const BOT_ERROR_CHAT_ID = parseInt(loadEnvOrThrow('BOT_ERROR_CHAT_ID'));
+const BOT_ERROR_CHAT_ID = loadEnvOrThrow('BOT_ERROR_CHAT_ID', true);
 // make sure chat ID is a number
-if (isNaN(BOT_ERROR_CHAT_ID)) {
-  throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
-}
-const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), '.vreddit-bot-cache');
-if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR);
+const CACHE_TABLE_NAME = loadEnvOrThrow('CACHE_TABLE_NAME');
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
@@ -52,7 +56,7 @@ module.exports = {
   BOT_API_TOKEN,
   BOT_ERROR_CHAT_ID,
   CACHE_CHAT,
-  CACHE_DIR,
+  CACHE_TABLE_NAME,
   FFMPEG,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,

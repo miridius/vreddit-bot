@@ -1,5 +1,5 @@
 const { MAX_FILE_SIZE_BYTES } = require('./io/environment');
-const cache = require('./io/file-cache');
+const cache = require('./io/ddb-cache');
 const reddit = require('./io/reddit-api');
 const { downloadVideo } = require('./io/download-video');
 
@@ -49,17 +49,27 @@ class VideoPost {
   /**
    * @param {import('serverless-telegram').Env} env
    * @param {string} url video URL
-   * @param {string} [redditUrl] reddit comments URL
+   * @param {string} [sourceUrl] reddit comments URL
    * @param {string} [title] reddit post title
    * @param {string} [fileId] telegram file ID for previously uploaded videos
    */
-  constructor(env, url, redditUrl, title, fileId) {
+  constructor(env, url, sourceUrl, title, fileId) {
     this.env = env;
     this.url = url;
-    const cachedInfo = cache.read(this.url);
-    this.redditUrl = redditUrl || cachedInfo.redditUrl;
-    this.title = title || cachedInfo.title;
-    this.fileId = fileId || cachedInfo.fileId;
+    this.sourceUrl = sourceUrl;
+    this.title = title;
+    this.fileId = fileId;
+  }
+
+  async loadCachedDetails() {
+    const cached = await cache.read(this.url);
+    if (cached) {
+      console.debug('found cached info:', cached);
+      this.sourceUrl = this.sourceUrl || cached.sourceUrl;
+      this.title = this.title || cached.title;
+      this.fileId = this.fileId || cached.fileId;
+    }
+    return this;
   }
 
   getVredditId() {
@@ -88,12 +98,13 @@ class VideoPost {
   }
 
   async getMissingInfo() {
-    if (!this.redditUrl) {
+    if (!this.sourceUrl) {
       const vredditId = this.getVredditId();
-      if (vredditId) this.redditUrl = await reddit.getCommentsUrl(vredditId);
+      if (vredditId)
+        this.sourceUrl = (await reddit.getCommentsUrl(vredditId)) || undefined;
     }
-    if (this.redditUrl && !this.title) {
-      this.title = (await reddit.getPostData(this.redditUrl)).title;
+    if (this.sourceUrl && !this.title) {
+      this.title = (await reddit.getPostData(this.sourceUrl)).title;
       cache.write(this);
     }
   }
@@ -117,14 +128,14 @@ class VideoPost {
     });
     this.fileId = result?.video?.file_id;
     this.env.debug('fileId:', this.fileId);
-    cache.write(this);
+    await cache.write(this);
   }
 
   sourceButton() {
     return {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Source', url: this.redditUrl || this.url }],
+          [{ text: 'Source', url: this.sourceUrl || this.url }],
         ],
       },
     };
