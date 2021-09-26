@@ -1,77 +1,171 @@
-const { log, FFMPEG } = require('./environment');
-const { exec } = require('child_process');
-const { existsSync, unlinkSync, statSync } = require('fs');
+const { log, isDev } = require('./environment');
+const { stat, access, rm, rename } = require('fs/promises');
 const { tmpdir } = require('os');
 const { resolve } = require('path');
+const youtubedl = require('youtube-dl-exec');
+const { constants } = require('fs');
 const filenamify = require('filenamify');
 
-/** @param {import('fs').PathLike} videoFile */
-const deleteIfExisting = (videoFile) => {
-  if (existsSync(videoFile)) {
-    log.warn(`${videoFile} already exists, attempting to delete`);
-    unlinkSync(videoFile);
+const exists = async (path) => {
+  try {
+    await access(path, constants.R_OK);
+    return true;
+  } catch {
+    return false;
   }
 };
 
+const DOWNLOAD_TIMEOUT = parseInt(process.env.DOWNLOAD_TIMEOUT || '0');
+
+/** @returns {string} */
+const getErrorMessage = (url, { stderr, originalMessage, message }) => {
+  if (originalMessage === 'Timed out') {
+    return `Video download timed out after ${DOWNLOAD_TIMEOUT} seconds`;
+  }
+  if (!stderr) return originalMessage || message;
+  if (stderr.includes('requested format not available')) {
+    return `Video too large (> 50 MB) or no supported formats available: ${url}`;
+  } else if (stderr.includes('Unable to extract video url')) {
+    return `Unable to extract video url from ${url}.`;
+  } else {
+    return stderr.match(/ERROR: (.*)/)?.[1] || stderr;
+  }
+};
+
+// Sequence to ensure unique paths during parallel execution
+let seq = 0;
+// Return an output path in the temp directory based on the current timestamp
+const uniqueTempPath = (extension) =>
+  resolve(tmpdir(), `${Date.now()}${seq++}.${extension}`);
+
+const vOpts = '[ext=mp4][vcodec!^=?av01]';
+const format =
+  [4, 8, 16, 25]
+    .map(
+      (audioSize) =>
+        `bestvideo${vOpts}[filesize<?${50 - audioSize}M]` +
+        `+bestaudio[filesize<?${audioSize}M]`,
+    )
+    .join('/') + `/best${vOpts}[filesize<?50M]`;
+
 /**
- * @param {string} id video ID
- * @param {any} outputFile full path to save the video to
- * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
+ * @param {import('../video-post')} post Any URL to attempt to download with youtube-dl
+ * @param {string} [proxy] optional proxy URL e.g. http://127.0.0.1:8080
+ * @returns {Promise<{path: string, infoJson: string, error?: string}>}
  */
-const execFFmpeg = (id, outputFile, httpProxy) => {
-  const scheme = httpProxy ? 'http' : 'https';
-  const dashUrl = `${scheme}://v.redd.it/${id}/DASHPlaylist.mpd`;
-  httpProxy = httpProxy ? `-http_proxy ${httpProxy}` : '';
-  log.info('Saving:', dashUrl, 'to:', outputFile, 'using:', FFMPEG, httpProxy);
-  return new Promise((resolve, reject) =>
-    exec(
-      `${FFMPEG} ${httpProxy} -i "${dashUrl}" -c copy ${outputFile}`,
-      (err, stdout, stderr) => {
-        if (err) reject(err);
-        log.debug(`stdout: ${stdout}`);
-        log.debug(`stderr: ${stderr}`);
-        resolve(stderr);
+const execYtdl = async (post, proxy) => {
+  const output = uniqueTempPath('mp4');
+
+  const url = post.url.toLowerCase().startsWith('http')
+    ? post.url
+    : `https://${post.url}`;
+
+  try {
+    const subprocess = youtubedl.raw(
+      url,
+      {
+        format,
+        proxy,
+        output,
+        writeInfoJson: true,
+        noProgress: true,
+        mergeOutputFormat: 'mp4',
+        // recodeVideo: 'mp4',
+        // verbose: true,
       },
-    ),
-  );
-};
+      { timeout: DOWNLOAD_TIMEOUT * 1000 },
+    );
 
-/** @param {number} n */
-const nanToUndef = (n) => (isNaN(n) ? undefined : n);
+    subprocess.stdout?.setEncoding('utf-8');
+    subprocess.stderr?.setEncoding('utf-8');
+    subprocess.stdout?.on('data', (s) => log.debug(s.trim()));
+    subprocess.stderr?.on('data', async (s) =>
+      post.statusLog(s.trim().replace(/</g, '&lt;')),
+    );
 
-/** @param {string} ffmpegStderr */
-const getOutputDimensions = (ffmpegStderr) => {
-  const output = ffmpegStderr?.split('Output #0')?.[1];
-  const [, w, h] = output?.match(/Video:\s.*\s(\d+)x(\d+)\s/) || [];
-  return { width: nanToUndef(parseInt(w)), height: nanToUndef(parseInt(h)) };
+    await subprocess;
+  } catch (/** @type {any} */ e) {
+    log.error(e);
+    await rm(output.replace('.mp4', '*')).catch(() => {});
+    // @ts-ignore
+    return { error: getErrorMessage(url, e) };
+  }
+
+  return (await exists(output))
+    ? { path: output, infoJson: output.replace('.mp4', '.info.json') }
+    : { path: `${output}.mp4`, infoJson: `${output}.info.json` };
 };
 
 /**
- * Downloads a video using ffmpeg, returns the output path and some statistics
- * @param {import('../video-post')} post VideoPost created from a URL (which may or may not be a video)
+ * Downloads a video using youtube-dl, returns output file path and other params
+ * ready to be passed directly to telegram sendVideo
+ * @param {import('../video-post')} post Any URL to attempt to download with youtube-dl
  * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
- * @returns {Promise<{path: string, width?: number, height?: number, size: number} | void>}
+ * @returns {Promise<{video: string, size: number, [key: string]: any, error?: string}>}
  */
 const downloadVideo = async (post, httpProxy) => {
-  const id = post.getVredditId();
-  // only v.redd.it URLs are supported currently
-  if (!id) return;
-  // Define a temp file path based on the video URL
-  const path = resolve(tmpdir(), `${filenamify(post.url)}.mp4`);
-  // Delete the video if it exists in case it is from a failed previous execution
-  deleteIfExisting(path);
-  // Use ffmpeg to save the video to a temp file at source quality
-  const ffmpegStderr = await execFFmpeg(id, path, httpProxy);
-  // Get video dimensions from ffmpeg output
-  const { width, height } = getOutputDimensions(ffmpegStderr);
-  const { size } = statSync(path);
-  log.debug({ path, width, height, size });
-  return { path, width, height, size };
+  // Use youtube-dl to download the video
+  const { path, infoJson, error } = await execYtdl(post, httpProxy);
+  // @ts-ignore
+  if (error) return { error };
+
+  // Load info from json
+  const info = require(infoJson);
+  info.resolution = info.resolution || `${info.width}x${info.height}`;
+  if (info.title === info.extractor && info.playlist_title) {
+    info.title = info.playlist_title;
+  }
+  if (info.title === info.id) info.title = undefined;
+
+  // Clean up temp file in background (inentionally do not await)
+  if (!isDev) rm(infoJson);
+
+  // rename the file to something more sensical before upload
+  const video = resolve(
+    tmpdir(),
+    filenamify(info.title || info.id, { replacement: '_' }) + '.mp4',
+  );
+  await rename(path, video);
+
+  // get file size from fs
+  const { size } = await stat(video);
+  info.size = size;
+
+  // log all formats for debugging purposes
+  console.table(
+    info.formats.map(({ format, ext, vcodec, acodec, filesize }) => ({
+      format,
+      ext,
+      vcodec,
+      acodec,
+      mb: filesize / 1024 / 1024,
+    })),
+  );
+
+  // post.statusLog(`\nvideo id: ${info.extractor}/${info.id}`);
+
+  post.statusLog('Done.\n');
+
+  const logInfo = (key, xform = (x) => x) =>
+    info[key] && post.statusLog(`<b>${key}</b>: ${xform(info[key])}`);
+
+  logInfo('title');
+  logInfo('duration', (d) => `${Math.round(d)} sec`);
+  logInfo('size', (s) => `${(s / 1024 / 1024).toFixed(2)} MB`);
+  logInfo('resolution');
+  logInfo('vcodec', (v) => `${v} ${info.vbr ? `@ ${info.vbr} kbps` : ''}`);
+  logInfo('acodec', (a) => `${a} ${info.abr ? `@ ${info.abr} kbps` : ''}`);
+
+  return {
+    video,
+    size,
+    title: info.title,
+    width: info.width,
+    height: info.height,
+    duration: info.duration,
+  };
 };
 
 module.exports = {
-  deleteIfExisting,
-  execFFmpeg,
   downloadVideo,
-  getOutputDimensions,
 };

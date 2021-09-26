@@ -1,5 +1,4 @@
 const os = require('os');
-const { resolve } = require('path');
 
 // limit imposed by telegram API
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
@@ -7,11 +6,12 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 // string describing the runtime OS
 const OS_INFO = `${os.platform()} ${os.arch()} (${os.type()} ${os.version()})`;
 
-// path to ffmpeg executable
-const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
-const FFMPEG =
-  process.env.FFMPEG ||
-  resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
+// Add path to ffmpeg executable
+process.env.PATH += ':./ffmpeg/bin';
+// const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
+// const FFMPEG =
+//   process.env.FFMPEG ||
+//   resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
 
 // Load constants from environment variables, throw an error if they are missing
 /**
@@ -57,7 +57,6 @@ module.exports = {
   BOT_ERROR_CHAT_ID,
   CACHE_CHAT,
   CACHE_TABLE_NAME,
-  FFMPEG,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,
   log,

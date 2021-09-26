@@ -4,6 +4,9 @@ FROM public.ecr.aws/lambda/nodejs:latest
 # Add yarn
 RUN npm i -g yarn && npm cache clean --force
 
+# Add Python
+RUN yum install python -y && yum clean all && rm -rf /var/cache/yum
+
 # Add ffmpeg
 COPY ffmpeg/bin/ffmpeg ${LAMBDA_TASK_ROOT}/ffmpeg/bin/ffmpeg
 

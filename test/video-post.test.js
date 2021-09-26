@@ -82,7 +82,7 @@ describe('VideoPost.findAllInText / fromUrl', () => {
     const url = 'http://www.example.com';
     return withFnMocks(
       () =>
-        expect(VideoPost.fromUrl(env, redditUrl)).resolves.toEqual({
+        expect(VideoPost.loadCachedInfo(env, redditUrl)).resolves.toEqual({
           env,
           url,
           redditUrl,

@@ -14,31 +14,23 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
       ?.filter((e) => e.type === 'url')
       .map((e) => text.substr(e.offset, e.length)) || [];
   env.debug('urls:', urls);
-  if (!urls?.length) return;
+  if (!urls.length) return;
 
   // try to download (or load from cache) each one
   const results = await Promise.all(
     urls.map(async (url) => {
-      const post = await VideoPost.fromUrl(env, url);
+      // Load the video info
+      const post = await VideoPost.loadCachedInfo(env, url);
 
-      // Check if we can re-use an existing file
-      await post.loadCachedDetails();
-      if (post.fileId) {
-        await post.getMissingInfo();
-        return {
-          video: post.fileId,
-          caption: post.title,
-          reply_to_message_id: message_id,
-          ...post.sourceButton(),
-        };
-      }
-
-      // Inform the users that the work is in progress since it might take a while
-      // NOTE: we don't wait for this to complete, just fire it and let it run
-      env.send({ action: 'upload_video' });
-
-      // Download and send the file
-      return post.downloadAndSend(chat, message_id);
+      // Check if we can re-use an existing file, otherwise download and send it
+      return post.fileId
+        ? {
+            video: post.fileId,
+            caption: post.title,
+            reply_to_message_id: message_id,
+            ...post.sourceButton(),
+          }
+        : post.downloadAndSend(chat, message_id);
     }),
   );
 
@@ -54,18 +46,28 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
   }
 };
 
+const urlRegex =
+  /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,63}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)/g;
+
+/** @param {string} text */
+const findUrls = (text) => [...text.matchAll(urlRegex)].map((m) => m[0]);
+
 /** @type import('serverless-telegram').InlineHandler */
 exports.inline = async ({ query }, env) => {
   if (!query) return;
   setLogMethods(env);
 
   // Check message for URLs
-  const posts = await VideoPost.findAllInText(env, query);
+  const urls = findUrls(query);
+  env.debug('urls:', urls);
+  if (!urls.length) return;
 
   // Try each one until one works
-  for (const post of posts) {
+  for (const url of urls) {
+    // Load the video info
+    const post = await VideoPost.loadCachedInfo(env, url);
+
     // Check if we can re-use an existing file, otherwise upload it to CACHE_CHAT
-    await post.loadCachedDetails();
     if (!post.fileId) await post.downloadAndSend(CACHE_CHAT);
 
     // If we have an existing file ID or download succeeded, return the inline query result

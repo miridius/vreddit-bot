@@ -29,6 +29,7 @@ Resources:
           BOT_API_TOKEN: !Ref BotApiToken
           BOT_ERROR_CHAT_ID: !Ref BotErrorChatId
           CACHE_TABLE_NAME: !Ref CacheTableName
+          DOWNLOAD_TIMEOUT: 20
           NODE_ENV: production
       Events:
         Webhook:
