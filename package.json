@@ -13,7 +13,7 @@
     "ffmpeg"
   ],
   "scripts": {
-    "dev": "nodemon -x env-cmd start-dev-server src/webhook.webhook",
+    "dev": "nodemon -x env-cmd start-dev-server src/lambda.devWebhook",
     "start": "env-cmd func start",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",

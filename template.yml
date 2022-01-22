@@ -18,18 +18,17 @@ Resources:
   WebhookFunction:
     Type: AWS::Serverless::Function
     Properties:
-      PackageType: Image
-      ImageConfig:
-        Command: ['src/webhook.webhook']
+      Description: Webhook for the Telegram bot API. Calls VideoDownloadFunction asynchronously
+      CodeUri: webhook
+      Handler: webhook.default
+      Runtime: nodejs14.x
       # At 1,769 MB, a function has the equivalent of one vCPU
       MemorySize: 1769
       Timeout: 29
       Environment:
         Variables:
-          BOT_API_TOKEN: !Ref BotApiToken
+          INVOKE_FUNCTION_NAME: !Ref VideoDownloadFunction
           BOT_ERROR_CHAT_ID: !Ref BotErrorChatId
-          CACHE_TABLE_NAME: !Ref CacheTableName
-          DOWNLOAD_TIMEOUT: 20
           NODE_ENV: production
       Events:
         Webhook:
@@ -38,12 +37,31 @@ Resources:
             Path: /webhook
             Method: post
       Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref VideoDownloadFunction
+  VideoDownloadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Separate lambda to perform video download & send, to avoid http api timeouts
+      PackageType: Image
+      ImageConfig:
+        Command: ['src/lambda.default']
+      # At 1,769 MB, a function has the equivalent of one vCPU
+      MemorySize: 1769
+      Timeout: 660
+      Environment:
+        Variables:
+          BOT_API_TOKEN: !Ref BotApiToken
+          BOT_ERROR_CHAT_ID: !Ref BotErrorChatId
+          CACHE_TABLE_NAME: !Ref CacheTableName
+          DOWNLOAD_TIMEOUT: 600
+          NODE_ENV: production
+      Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CacheTableName
     Metadata:
       Dockerfile: Dockerfile
       DockerContext: .
-
   CacheTable:
     Type: AWS::Serverless::SimpleTable
     Properties:

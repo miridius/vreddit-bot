@@ -17,33 +17,17 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
   if (!urls.length) return;
 
   // try to download (or load from cache) each one
-  const results = await Promise.all(
+  await Promise.all(
     urls.map(async (url) => {
       // Load the video info
       const post = await VideoPost.loadCachedInfo(env, url);
 
       // Check if we can re-use an existing file, otherwise download and send it
       return post.fileId
-        ? {
-            video: post.fileId,
-            caption: post.title,
-            reply_to_message_id: message_id,
-            ...post.sourceButton(),
-          }
+        ? post.sendVideo(chat, { video: post.fileId }, message_id)
         : post.downloadAndSend(chat, message_id);
     }),
   );
-
-  // filter any responses to be sent to the TG api
-  const responses = results.filter((r) => r);
-
-  // if there's exactly one API response we can just return it
-  // otherwise we need to send them to the API individually
-  if (responses.length === 1) {
-    return responses[0];
-  } else {
-    await Promise.all(responses.map((r) => env.send(r)));
-  }
 };
 
 const urlRegex =

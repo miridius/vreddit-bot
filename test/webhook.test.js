@@ -1,5 +1,5 @@
 const { mocked, CHAT, withFnMocks, ctx, FROM } = require('./helpers');
-const webhook = require('../src/webhook');
+const webhook = require('../src/lambda');
 const { MessageEnv, InlineEnv } = require('serverless-telegram');
 
 jest.mock('../src/handler');

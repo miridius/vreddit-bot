@@ -8,9 +8,9 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
 s3_prefix = "vreddit-bot-dev"
 region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
-image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
+image_repositories = ["VideoDownloadFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotdev075d0aec/videodownloadfunction3bdd41ccrepo"]
 [default.logs.parameters]
-name = "WebhookFunction"
+name = "VideoDownloadFunction"
 
 [staging]
 [staging.global.parameters]
@@ -22,6 +22,6 @@ s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
 s3_prefix = "vreddit-bot-staging"
 region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
-image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
+image_repositories = ["VideoDownloadFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotdev075d0aec/videodownloadfunction3bdd41ccrepo"]
 [staging.logs.parameters]
-name = "WebhookFunction"
+name = "VideoDownloadFunction"

@@ -1,0 +1,11 @@
+{
+  "name": "webhook",
+  "version": "0.0.0",
+  "description": "Source code for separate webhook lambda function",
+  "main": "webhook.js",
+  "license": "UNLICENSED",
+  "private": "true",
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.39.0"
+  }
+}
