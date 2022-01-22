@@ -23,11 +23,26 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [ ] Reply to /help with a short text about what the bot can do
 - [ ] Stop the bot sometimes asking for location info when using inline mode
 - [ ] Use youtube-dl to add support for youtube & many other sites
-  - Check output for "ERROR: Unsupported URL: https://example.com"
-  - Probably need to add FFmpeg to PATH
-  - Format opts (in config file?): `-f 'bestvideo[ext=mp4][filesize<?45M]+bestaudio[ext=m4a][filesize<?5M]/best[ext=mp4][filesize<?50M]'`
-  - Note that for v.redd.it filesize is not known so we still need to check size of output
-- [ ] Use streamable.com for videos between 50-500MB? (max 720p & 10min)
+  - [ ] Specify ffmpeg in cli opts instead of PATH
+  - [ ] Download info JSON, manually choose formats, pass info JSON & format choice to CLI
+  - [ ] Save all relevant fields from info JSON to cache
+  - [ ] Details button to show video encoding info
+  - [ ] Warning if HD available but lower res chosen due to file size (also put in title ?)
+  - [ ] Update tests
+- [ ] Extra commands: /video, /audio, /allowVP9, /allowAV1
+- [ ] Alternative upload options for videos > 50mb (e.g. user provides S3 bucket)
+- [ ] Youtube clips?
+- [ ] Thumbnail?
+- [ ] Sls TG todos:
+  - Fix dev server crash on bad response
+  - Dev server with containers
+  - Dev server with local URL
+  - Update getting started in readme
+  - Edit message detection
+  - Allow env.send to send to other chats when in inline mode
+  - Fix example tests
+  - Move webhook & its test up one dir?
+  - Use default export
 
 ### Implementation details:
 

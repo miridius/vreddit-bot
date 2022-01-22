@@ -1,10 +1,10 @@
-const { log, isDev } = require('./environment');
 const { stat, access, rm, rename } = require('fs/promises');
 const { tmpdir } = require('os');
 const { resolve } = require('path');
 const youtubedl = require('youtube-dl-exec');
 const { constants } = require('fs');
 const filenamify = require('filenamify');
+const { isDev } = require('./environment');
 
 const exists = async (path) => {
   try {
@@ -16,11 +16,12 @@ const exists = async (path) => {
 };
 
 const DOWNLOAD_TIMEOUT = parseInt(process.env.DOWNLOAD_TIMEOUT || '0');
+const execaOpts = { timeout: DOWNLOAD_TIMEOUT * 1000 };
 
 /** @returns {string} */
 const getErrorMessage = (url, { stderr, originalMessage, message }) => {
   if (originalMessage === 'Timed out') {
-    return `Video download timed out after ${DOWNLOAD_TIMEOUT} seconds`;
+    return `Video download timed out after ${DOWNLOAD_TIMEOUT / 60} minutes`;
   }
   if (!stderr) return originalMessage || message;
   if (stderr.includes('requested format not available')) {
@@ -38,7 +39,8 @@ let seq = 0;
 const uniqueTempPath = (extension) =>
   resolve(tmpdir(), `${Date.now()}${seq++}.${extension}`);
 
-const vOpts = '[ext=mp4][vcodec!^=?av01]';
+// const vOpts = '[ext=mp4][vcodec!^=?av01]';
+const vOpts = '[vcodec!^=?av01]';
 const format =
   [4, 8, 16, 25]
     .map(
@@ -54,38 +56,37 @@ const format =
  * @returns {Promise<{path: string, infoJson: string, error?: string}>}
  */
 const execYtdl = async (post, proxy) => {
-  const output = uniqueTempPath('mp4');
-
   const url = post.url.toLowerCase().startsWith('http')
     ? post.url
     : `https://${post.url}`;
 
+  const output = uniqueTempPath('mp4');
+  const ytdlOpts = {
+    proxy,
+    output,
+    format,
+    writeInfoJson: true,
+    noProgress: true,
+    mergeOutputFormat: 'mp4',
+    forceIpv4: true,
+    recodeVideo: 'mp4',
+    verbose: true,
+  };
+
   try {
-    const subprocess = youtubedl.raw(
-      url,
-      {
-        format,
-        proxy,
-        output,
-        writeInfoJson: true,
-        noProgress: true,
-        mergeOutputFormat: 'mp4',
-        // recodeVideo: 'mp4',
-        // verbose: true,
-      },
-      { timeout: DOWNLOAD_TIMEOUT * 1000 },
-    );
+    post.env.debug('Calling youtube-dl:', url, ytdlOpts, execaOpts);
+    const subprocess = youtubedl.raw(url, ytdlOpts, execaOpts);
 
     subprocess.stdout?.setEncoding('utf-8');
     subprocess.stderr?.setEncoding('utf-8');
-    subprocess.stdout?.on('data', (s) => log.debug(s.trim()));
+    subprocess.stdout?.on('data', (s) => post.env.debug(s.trim()));
     subprocess.stderr?.on('data', async (s) =>
       post.statusLog(s.trim().replace(/</g, '&lt;')),
     );
 
     await subprocess;
   } catch (/** @type {any} */ e) {
-    log.error(e);
+    post.env.error(e);
     await rm(output.replace('.mp4', '*')).catch(() => {});
     // @ts-ignore
     return { error: getErrorMessage(url, e) };
