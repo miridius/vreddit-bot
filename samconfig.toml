@@ -1,15 +1,15 @@
 version = 0.1
-[default]
-[default.global.parameters]
+[dev]
+[dev.global.parameters]
 stack_name = "vreddit-bot-dev"
-[default.deploy]
-[default.deploy.parameters]
+[dev.deploy]
+[dev.deploy.parameters]
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
 s3_prefix = "vreddit-bot-dev"
 region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
-[default.logs.parameters]
+[dev.logs.parameters]
 name = "WebhookFunction"
 
 [staging]

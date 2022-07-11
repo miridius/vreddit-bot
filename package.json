@@ -3,8 +3,8 @@
   "version": "0.4.2",
   "description": "A telegram bot for converting v.redd.it URLs to video files",
   "author": {
-    "name": "David Drem Rolle",
-    "email": "dave@rolle.family"
+    "name": "David D. Rolle",
+    "email": "david@rolle.dev"
   },
   "license": "UNLICENSED",
   "private": "true",
@@ -22,13 +22,15 @@
     "test:update": "env-cmd jest -u",
     "update-deps": "ncu -u -x husky --doctor && yarn lint:fix && ncu -u -t minor --doctor && yarn lint",
     "release": "ncu -e2 -t minor && npx np --no-publish",
-    "deploy": "sam build && env-cmd -f .env.staging npm run sam-deploy && npm run logs",
-    "sam-deploy": "sam deploy --config-env $SAM_ENV --parameter-overrides BotApiToken=$BOT_API_TOKEN BotErrorChatId=$BOT_ERROR_CHAT_ID CacheTableName=$CACHE_TABLE_NAME",
-    "logs": "env-cmd -f .env.staging npm run sam-logs",
+    "deploy:dev": "env-cmd -f .env.dev cdk deploy",
+    "deploy:stg": "env-cmd -f .env.staging cdk deploy",
+    "logs:dev": "env-cmd -f .env.dev npm run sam-logs",
+    "logs:stg": "env-cmd -f .env.staging npm run sam-logs",
     "sam-logs": "sam logs --config-env $SAM_ENV -t",
     "build": "tsc",
     "watch": "tsc -w",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "set-webhook:dev": "env-cmd -f .env.dev npx set-webhook"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.39.0",
