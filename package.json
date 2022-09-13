@@ -6,6 +6,9 @@
     "name": "David Drem Rolle",
     "email": "dave@rolle.family"
   },
+  "engines": {
+    "node": "^14"
+  },
   "license": "UNLICENSED",
   "private": "true",
   "files": [

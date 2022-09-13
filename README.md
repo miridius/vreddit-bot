@@ -61,6 +61,8 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
    - Node.js v14 (it must be 14 to match the version in Azure/AWS).  
       _Tip: You can install & manage multiple Node versions using tools like [nodist](https://github.com/nullivex/nodist) (Windows) or [n](https://github.com/tj/n) (Linux/MacOS/WSL)_
    - [Yarn](https://yarnpkg.com/)
+   - Python (any version, as long as it is on your `PATH` as `python`)
+   - An AWS account, with credentials saved in your `~/.aws/credentials` file (see [Loading credentials in Node.js from the shared credentials file](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html)).
 
 1. `git clone` the repo and `cd` into it
 
@@ -69,8 +71,12 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 1. Create a `.env` file in the root of the project with the following params:
 
    ```properties
-   BOT_ERROR_CHAT_ID=<your telegram chat ID>
+   AWS_PROFILE=<(optional) credentials profile e.g. personal-account>
+   AWS_REGION=<Pick the AWS region closest to you>
+   CACHE_TABLE_NAME=video-info-cache-dev
+
    BOT_API_TOKEN=<your personal dev bot API token>
+   BOT_ERROR_CHAT_ID=<(optional) your telegram chat ID>
    ```
 
    - If you don't konw your telegram chat ID, don't worry. Just set it to 0 and update it later once you've found out your ID from the bot logs.

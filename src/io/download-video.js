@@ -6,6 +6,18 @@ const youtubedl = require('youtube-dl-exec');
 const { constants } = require('fs');
 const filenamify = require('filenamify');
 
+const UPDATE_INTERVAL_MS = 1000 * 60 * 60 * 24; // 1 day
+/** @type {Date | undefined} */
+let lastUpdated;
+
+const shouldUpdate = () => {
+  // @ts-ignore
+  if (!lastUpdated || lastUpdated < new Date() - UPDATE_INTERVAL_MS) {
+    lastUpdated = new Date();
+    return true;
+  }
+};
+
 const exists = async (path) => {
   try {
     await access(path, constants.R_OK);
@@ -38,7 +50,7 @@ let seq = 0;
 const uniqueTempPath = (extension) =>
   resolve(tmpdir(), `${Date.now()}${seq++}.${extension}`);
 
-const vOpts = '[ext=mp4][vcodec!^=?av01]';
+const vOpts = '[ext=mp4][vcodec!^=?av01]/[ext=gif]';
 const format =
   [4, 8, 16, 25]
     .map(
@@ -51,10 +63,10 @@ const format =
 /**
  * @param {import('../video-post')} post Any URL to attempt to download with youtube-dl
  * @param {string} [proxy] optional proxy URL e.g. http://127.0.0.1:8080
- * @returns {Promise<{path: string, infoJson: string, error?: string}>}
+ * @returns {Promise<{path: string, infoJson: string} | {error: string}>}
  */
 const execYtdl = async (post, proxy) => {
-  const output = uniqueTempPath('mp4');
+  const output = uniqueTempPath('tmp');
 
   const url = post.url.toLowerCase().startsWith('http')
     ? post.url
@@ -70,8 +82,9 @@ const execYtdl = async (post, proxy) => {
         writeInfoJson: true,
         noProgress: true,
         mergeOutputFormat: 'mp4',
-        // recodeVideo: 'mp4',
+        recodeVideo: 'mp4',
         // verbose: true,
+        update: shouldUpdate(),
       },
       { timeout: DOWNLOAD_TIMEOUT * 1000 },
     );
@@ -86,14 +99,15 @@ const execYtdl = async (post, proxy) => {
     await subprocess;
   } catch (/** @type {any} */ e) {
     log.error(e);
-    await rm(output.replace('.mp4', '*')).catch(() => {});
+    await rm(output.replace('.tmp', '*')).catch(() => {});
     // @ts-ignore
     return { error: getErrorMessage(url, e) };
   }
 
-  return (await exists(output))
-    ? { path: output, infoJson: output.replace('.mp4', '.info.json') }
-    : { path: `${output}.mp4`, infoJson: `${output}.info.json` };
+  const path = output.replace('.tmp', '.mp4');
+  if (!(await exists(path))) await rename(output, path);
+
+  return { path, infoJson: `${output}.info.json` };
 };
 
 /**
@@ -101,13 +115,13 @@ const execYtdl = async (post, proxy) => {
  * ready to be passed directly to telegram sendVideo
  * @param {import('../video-post')} post Any URL to attempt to download with youtube-dl
  * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
- * @returns {Promise<{video: string, size: number, [key: string]: any, error?: string}>}
+ * @returns {Promise<{video: string, size: number, [key: string]: any} | {error: string}>}
  */
 const downloadVideo = async (post, httpProxy) => {
   // Use youtube-dl to download the video
-  const { path, infoJson, error } = await execYtdl(post, httpProxy);
-  // @ts-ignore
-  if (error) return { error };
+  const res = await execYtdl(post, httpProxy);
+  if ('error' in res) return { error: res.error };
+  const { path, infoJson } = res;
 
   // Load info from json
   const info = require(infoJson);
@@ -133,7 +147,7 @@ const downloadVideo = async (post, httpProxy) => {
 
   // log all formats for debugging purposes
   console.table(
-    info.formats.map(({ format, ext, vcodec, acodec, filesize }) => ({
+    info.formats?.map(({ format, ext, vcodec, acodec, filesize }) => ({
       format,
       ext,
       vcodec,
