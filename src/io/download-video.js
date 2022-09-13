@@ -50,7 +50,8 @@ let seq = 0;
 const uniqueTempPath = (extension) =>
   resolve(tmpdir(), `${Date.now()}${seq++}.${extension}`);
 
-const vOpts = '[ext=mp4][vcodec!^=?av01]/[ext=gif]';
+const vOpts = '[ext=mp4][vcodec!^=?av01]';
+const gif = '[ext=gif][filesize<?50M]';
 const format =
   [4, 8, 16, 25]
     .map(
@@ -58,7 +59,7 @@ const format =
         `bestvideo${vOpts}[filesize<?${50 - audioSize}M]` +
         `+bestaudio[filesize<?${audioSize}M]`,
     )
-    .join('/') + `/best${vOpts}[filesize<?50M]`;
+    .join('/') + `/best${vOpts}[filesize<?50M]/${gif}`;
 
 /**
  * @param {import('../video-post')} post Any URL to attempt to download with youtube-dl
@@ -104,8 +105,14 @@ const execYtdl = async (post, proxy) => {
     return { error: getErrorMessage(url, e) };
   }
 
-  const path = output.replace('.tmp', '.mp4');
-  if (!(await exists(path))) await rename(output, path);
+  let path;
+  for (const p of [output.replace('.tmp', '.mp4'), output, `${output}.mp4`]) {
+    if (await exists(p)) {
+      path = p;
+      break;
+    }
+  }
+  if (!path) return { error: 'ERROR: youtube-dl output file not found' };
 
   return { path, infoJson: `${output}.info.json` };
 };

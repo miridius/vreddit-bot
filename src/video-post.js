@@ -35,6 +35,7 @@ class VideoPost {
     this.status = '';
     this.statusMsg = undefined;
     this.timer = undefined;
+    this.sendStatus = 'message' in this.env;
   }
 
   statusLog(/** @type {string} */ message = '', debounceMs = DEBOUNCE_MS) {
@@ -51,8 +52,7 @@ class VideoPost {
   }
 
   async _updateStatus(/** @type {string} */ text, chat, replyTo) {
-    // @ts-ignore
-    if (!this.env.message) return;
+    if (!this.sendStatus) return;
     const content = {
       text,
       parse_mode: 'HTML',
@@ -81,15 +81,17 @@ class VideoPost {
    * @returns {Promise<import('serverless-telegram').MessageResponse>}
    */
   async downloadAndSend(chat, replyTo) {
+    // Don't spam group chats
+    this.sendStatus = this.sendStatus && chat.type === 'private';
     // Inform the users that the work is in progress since it might take a while
     // NOTE: we don't wait for this to complete, just fire it and let it run
-    // @ts-ignore
-    if (this.env.message) this.env.send({ action: 'upload_video' });
+    if (this.sendStatus) this.env.send({ action: 'upload_video' });
 
     this.setStatus(`Downloading ${this.url}...`, chat, replyTo);
 
     let title, video;
     try {
+      // @ts-ignore
       [{ title, ...video }] = await Promise.all([
         downloadVideo(this),
         this.getVredditInfo(),
