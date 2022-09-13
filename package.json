@@ -25,7 +25,8 @@
     "test:update": "env-cmd jest -u",
     "update-deps": "ncu -u -x husky --doctor && yarn lint:fix && ncu -u -t minor --doctor && yarn lint",
     "release": "ncu -e2 -t minor && npx np --no-publish",
-    "deploy": "sam build && env-cmd -f .env.staging npm run sam-deploy && npm run logs",
+    "deploy": "sam build && env-cmd -f .env.staging npm run sam-deploy",
+    "deploy-prod": "sam build && env-cmd -f .env.prod npm run sam-deploy",
     "sam-deploy": "sam deploy --config-env $SAM_ENV --parameter-overrides BotApiToken=$BOT_API_TOKEN BotErrorChatId=$BOT_ERROR_CHAT_ID CacheTableName=$CACHE_TABLE_NAME",
     "logs": "env-cmd -f .env.staging npm run sam-logs",
     "sam-logs": "sam logs --config-env $SAM_ENV -t"

@@ -1,5 +1,6 @@
 # Start with the most recent AWS Lambda Nodejs version
-FROM public.ecr.aws/lambda/nodejs:latest
+# TODO: change back to latest after https://github.com/miridius/serverless-telegram/issues/38 is fixed
+FROM public.ecr.aws/lambda/nodejs:14
 
 # Add yarn
 RUN npm i -g yarn && npm cache clean --force

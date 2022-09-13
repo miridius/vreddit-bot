@@ -72,7 +72,7 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
    ```properties
    AWS_PROFILE=<(optional) credentials profile e.g. personal-account>
-   AWS_REGION=<Pick the AWS region closest to you>
+   AWS_REGION=eu-central-1
    CACHE_TABLE_NAME=video-info-cache-dev
 
    BOT_API_TOKEN=<your personal dev bot API token>
@@ -100,8 +100,31 @@ yarn lint:fix
 yarn start
 ```
 
+### Manual deployment to staging
+
+1. Create a new file `.env.staging`, with the following content:
+
+```properties
+AWS_PROFILE=<(optional) credentials profile e.g. personal-account>
+AWS_REGION=eu-central-1
+CACHE_TABLE_NAME=video-info-cache-staging
+
+BOT_API_TOKEN=<staging bot API token>
+BOT_ERROR_CHAT_ID=<your telegram chat id>
+
+SAM_ENV=staging
+```
+
+2. Install the AWS SAM CLI
+3. Run `yarn deploy`
+4. If needed, update the webook URL by running `npx env-cmd -f .env.staging set-webhook <URL>`
+
 ### CI/CD
 
 1. Open a **pull request** to run linting & tests
 1. Push to the **master branch** (e.g. merge a PR) to deploy to **staging** ([@staging_vreddit_bot](https://t.me/staging_vreddit_bot))
 1. Create a tag by running **`yarn release`** to deploy to **prod** ([@vreddit_bot](https://t.me/vreddit_bot))
+
+```
+
+```
