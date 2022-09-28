@@ -1,3 +1,7 @@
 {
-  "recommendations": ["ms-azuretools.vscode-azurefunctions"]
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "github.vscode-pull-request-github",
+    "esbenp.prettier-vscode"
+  ]
 }

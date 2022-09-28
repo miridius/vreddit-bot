@@ -15,9 +15,12 @@ process.env.PATH += ':./ffmpeg/bin';
 
 // Load constants from environment variables, throw an error if they are missing
 /**
+ * @template {boolean} T
  * @param {string} key
+ * @param {T} [toInteger]
+ * @returns {T extends true ? number : string}
  */
-const loadEnvOrThrow = (key, toInteger = false) => {
+const loadEnvOrThrow = (key, toInteger) => {
   const value = process.env[key];
   if (!value) throw new Error(`${key} environment variable not set!`);
   if (toInteger) {
@@ -25,14 +28,23 @@ const loadEnvOrThrow = (key, toInteger = false) => {
     if (isNaN(intValue)) {
       throw new Error(`${key} env var is not a valid integer: ${value}`);
     }
+    // @ts-ignore
     return intValue;
   }
+  // @ts-ignore
   return value;
 };
+
 const BOT_API_TOKEN = loadEnvOrThrow('BOT_API_TOKEN');
-const BOT_ERROR_CHAT_ID = loadEnvOrThrow('BOT_ERROR_CHAT_ID', true);
+
 // make sure chat ID is a number
-const CACHE_TABLE_NAME = loadEnvOrThrow('CACHE_TABLE_NAME');
+const BOT_ERROR_CHAT_ID = loadEnvOrThrow('BOT_ERROR_CHAT_ID', true);
+
+// cache table is mandatory in production but optional when running locally.
+const CACHE_TABLE_NAME =
+  process.env.NODE_ENV === 'production'
+    ? loadEnvOrThrow('CACHE_TABLE_NAME', false)
+    : process.env.CACHE_TABLE_NAME;
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {

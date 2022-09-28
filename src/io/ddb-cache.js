@@ -5,7 +5,8 @@ const {
 } = require('@aws-sdk/client-dynamodb');
 const { log, CACHE_TABLE_NAME } = require('./environment');
 
-const ddbClient = new DynamoDBClient({});
+// disable caching & don't connect to DDB if CACHE_TABLE_NAME is not set.
+const ddbClient = CACHE_TABLE_NAME && new DynamoDBClient({});
 
 const fromAttrVals = (obj) =>
   Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v.S]));
@@ -19,7 +20,7 @@ const toAttrVals = (obj) =>
 
 /** @param {string} url video URL */
 exports.read = async (url) => {
-  if (!url) return;
+  if (!url || !ddbClient) return;
   const data = await ddbClient.send(
     new GetItemCommand({
       TableName: CACHE_TABLE_NAME,
@@ -34,7 +35,7 @@ exports.read = async (url) => {
 
 /** @param {import('../video-post')} post */
 exports.write = async ({ url, sourceUrl, title, fileId }) => {
-  if (!fileId) return;
+  if (!fileId || !ddbClient) return;
   try {
     await ddbClient.send(
       new PutItemCommand({

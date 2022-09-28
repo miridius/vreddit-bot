@@ -1,10 +1,14 @@
 # VReddit Telegram Bot
 
-A telegram bot which listens for v.redd.it URLs and replies with the video file (including audio)
+A telegram bot which listens for video URLs and replies with the video file (including audio)
+
+Supports v.redd.it and some other video platforms.
 
 ## Usage
 
-Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a private message containing a v.redd.it link.
+To use the live bot, add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a private message containing a video link.
+
+To run locally, see the **Development** section of this readme.
 
 ## TO DO
 
@@ -60,9 +64,8 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
    - Git
    - Node.js v14 (it must be 14 to match the version in Azure/AWS).  
       _Tip: You can install & manage multiple Node versions using tools like [nodist](https://github.com/nullivex/nodist) (Windows) or [n](https://github.com/tj/n) (Linux/MacOS/WSL)_
-   - [Yarn](https://yarnpkg.com/)
-   - Python (any version, as long as it is on your `PATH` as `python`)
-   - An AWS account, with credentials saved in your `~/.aws/credentials` file (see [Loading credentials in Node.js from the shared credentials file](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html)).
+   - [Yarn](https://yarnpkg.com/) (`npm install -g yarn`)
+   - Python (any version, but it must be on your `$PATH` as `python`. If it's called `python3` it won't be found by youtube-dl.)
 
 1. `git clone` the repo and `cd` into it
 
@@ -70,24 +73,18 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 1. Create a `.env` file in the root of the project with the following params:
 
-   ```properties
-   AWS_PROFILE=<(optional) credentials profile e.g. personal-account>
-   AWS_REGION=eu-central-1
-   CACHE_TABLE_NAME=video-info-cache-dev
-
+   ```bash
    BOT_API_TOKEN=<your personal dev bot API token>
-   BOT_ERROR_CHAT_ID=<(optional) your telegram chat ID>
+   BOT_ERROR_CHAT_ID=<your telegram chat ID>  # optional
+   DOWNLOAD_TIMEOUT=300  # optional (default = no timeout)
    ```
-
-   - If you don't konw your telegram chat ID, don't worry. Just set it to 0 and update it later once you've found out your ID from the bot logs.
-   - If you don't have a spare bot you can use for local development, make a new bot using the botfather. Don't try use a bot that you are already using for something else, it won't work.
 
 1. Run `yarn dev` to start local dev server. You can now message your dev bot in telegram to test your code.
 
-### Common Commands
+### Useful Commands
 
 ```sh
-# Run a local bot server connected to the bot configured in the `.env` file:
+# Run a local bot server (configured in .env), restarts any time you save a source code file:
 yarn dev
 
 # Run all tests in watch mode:
@@ -95,10 +92,29 @@ yarn test:watch
 
 # Auto fix lint/formatting issues (where possible):
 yarn lint:fix
-
-# Run the Azure function locally in watch mode:
-yarn start
 ```
+
+### Testing the DynamoDB video info caching
+
+For normal development purposes video caching is disabled, since that reduces the amount of setup needed, plus it's helpful for testing to _not_ have a cache.
+
+However, sometimes you might want to specifically test the caching logic locally.
+
+In that case you will need:
+
+- an AWS account
+- AWS credentials saved in your `~/.aws/credentials` file (see [Loading credentials in Node.js from the shared credentials file](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html))
+- a DynamoDB table with a primary key called `url` of type `String`.
+
+Then, add these properties to your `.env` file:
+
+```properties
+AWS_PROFILE=<(optional) credentials profile e.g. personal>
+AWS_REGION=<your DynamoDB table region e.g. eu-central-1>
+CACHE_TABLE_NAME=<your DynamoDB table name e.g. video-info-cache-dev>
+```
+
+Now run `yarn dev` as normal, and the cache table you specified will be used.
 
 ### Manual deployment to staging
 
