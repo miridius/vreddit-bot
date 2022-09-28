@@ -22,16 +22,16 @@ To run locally, see the **Development** section of this readme.
 - [x] Support reddit links
 - [x] Add reddit post title as video caption
 - [x] Include link to source as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
+- [x] Use youtube-dl to download videos so that more sites are supported
+- [ ] Improve youtube-dl output message
+- [ ] If v.redd.it video is > 50 mb, try to use lower quality stream
 - [ ] If forwarding to the bot from a group chat, give a button to send the video back to that chat (e.g. via inline)
-- [ ] If video is > 50 mb, try to use lower quality stream
 - [ ] Reply to /help with a short text about what the bot can do
 - [ ] Stop the bot sometimes asking for location info when using inline mode
-- [ ] Use youtube-dl to add support for youtube & many other sites
-  - Check output for "ERROR: Unsupported URL: https://example.com"
-  - Probably need to add FFmpeg to PATH
-  - Format opts (in config file?): `-f 'bestvideo[ext=mp4][filesize<?45M]+bestaudio[ext=m4a][filesize<?5M]/best[ext=mp4][filesize<?50M]'`
-  - Note that for v.redd.it filesize is not known so we still need to check size of output
 - [ ] Use streamable.com for videos between 50-500MB? (max 720p & 10min)
+- [ ] /debug command which behaves as normal but enables verbose logging.
+- [ ] /video command for group chats which enables the log message for that link despite it being a group
+- [ ] /gif command which does video-only, and /audio which does audio-only
 
 ### Implementation details:
 
@@ -40,16 +40,13 @@ To run locally, see the **Development** section of this readme.
 - [x] Rename repo & npm package to vreddit-bot
 - [x] Increase code coverage / add badges
 - [x] Local dev server
-- [ ] Use async file operations & fix concurrency problems (globally unique file name?)
+- [x] Use async file operations & fix concurrency problems (globally unique file name?)
+- [x] Try other hosting options to see if it's faster and/or cheaper:
+  - [x] AWS Lambda --> was much faster & cheaper than Azure!
+- [ ] Swap CI from Azure to AWS
 - [ ] CI: Optimise so that we don't run checks twice on releases?
-- [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
-- [ ] Tune Azure max workers param
-- [ ] Try other hosting options to see if it's faster and/or cheaper:
-  - [ ] Azure x64 Windows host
-  - [ ] Azure Linux host
-  - [ ] AWS Lambda
-  - [ ] Google Cloud Functions
 - [ ] Collect stats on inline option chosen?
+- [ ] Some kind of solution for when more than 20 seconds are needed to download a file?
 
 [1]: https://dev.to/mbelsky/pair-husky-with-git-lfs-in-your-javascript-project-2kh0
 [2]: https://github.com/typicode/husky/issues/108
