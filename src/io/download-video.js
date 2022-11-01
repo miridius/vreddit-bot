@@ -145,7 +145,7 @@ const downloadVideo = async (post, httpProxy) => {
   const video = resolve(
     tmpdir(),
     filenamify(info.title || info.id, { replacement: '_' }) + '.mp4',
-  );
+  ).replace(/#/g, '_');
   await rename(path, video);
 
   // get file size from fs
