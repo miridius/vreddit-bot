@@ -74,7 +74,7 @@ const execYtdl = async (post, proxy) => {
     : `https://${post.url}`;
 
   try {
-    const subprocess = youtubedl.raw(
+    const subprocess = youtubedl(
       url,
       {
         format,

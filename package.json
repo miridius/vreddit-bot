@@ -37,7 +37,7 @@
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.5",
     "serverless-telegram": "^0.6.1",
-    "youtube-dl-exec": "^1.2.11"
+    "youtube-dl-exec": "^2.4.15"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
