@@ -1,10 +1,14 @@
 # VReddit Telegram Bot
 
-A telegram bot which listens for v.redd.it URLs and replies with the video file (including audio)
+A telegram bot which listens for video URLs and replies with the video file (including audio)
+
+Supports v.redd.it and some other video platforms.
 
 ## Usage
 
-Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a private message containing a v.redd.it link.
+To use the live bot, add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a private message containing a video link.
+
+To run locally, see the **Development** section of this readme.
 
 ## TO DO
 
@@ -18,16 +22,16 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [x] Support reddit links
 - [x] Add reddit post title as video caption
 - [x] Include link to source as [inline keyboard](https://core.telegram.org/bots/2-0-intro#new-inline-keyboards)
+- [x] Use youtube-dl to download videos so that more sites are supported
+- [ ] Improve youtube-dl output message
+- [ ] If v.redd.it video is > 50 mb, try to use lower quality stream
 - [ ] If forwarding to the bot from a group chat, give a button to send the video back to that chat (e.g. via inline)
-- [ ] If video is > 50 mb, try to use lower quality stream
 - [ ] Reply to /help with a short text about what the bot can do
 - [ ] Stop the bot sometimes asking for location info when using inline mode
-- [ ] Use youtube-dl to add support for youtube & many other sites
-  - Check output for "ERROR: Unsupported URL: https://example.com"
-  - Probably need to add FFmpeg to PATH
-  - Format opts (in config file?): `-f 'bestvideo[ext=mp4][filesize<?45M]+bestaudio[ext=m4a][filesize<?5M]/best[ext=mp4][filesize<?50M]'`
-  - Note that for v.redd.it filesize is not known so we still need to check size of output
 - [ ] Use streamable.com for videos between 50-500MB? (max 720p & 10min)
+- [ ] /debug command which behaves as normal but enables verbose logging.
+- [ ] /video command for group chats which enables the log message for that link despite it being a group
+- [ ] /gif command which does video-only, and /audio which does audio-only
 
 ### Implementation details:
 
@@ -36,16 +40,13 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 - [x] Rename repo & npm package to vreddit-bot
 - [x] Increase code coverage / add badges
 - [x] Local dev server
-- [ ] Use async file operations & fix concurrency problems (globally unique file name?)
+- [x] Use async file operations & fix concurrency problems (globally unique file name?)
+- [x] Try other hosting options to see if it's faster and/or cheaper:
+  - [x] AWS Lambda --> was much faster & cheaper than Azure!
+- [ ] Swap CI from Azure to AWS
 - [ ] CI: Optimise so that we don't run checks twice on releases?
-- [ ] Set up [git-lfs](https://git-lfs.github.com/) to work with husky. See also: [1], [2], [3]
-- [ ] Tune Azure max workers param
-- [ ] Try other hosting options to see if it's faster and/or cheaper:
-  - [ ] Azure x64 Windows host
-  - [ ] Azure Linux host
-  - [ ] AWS Lambda
-  - [ ] Google Cloud Functions
 - [ ] Collect stats on inline option chosen?
+- [ ] Some kind of solution for when more than 20 seconds are needed to download a file?
 
 [1]: https://dev.to/mbelsky/pair-husky-with-git-lfs-in-your-javascript-project-2kh0
 [2]: https://github.com/typicode/husky/issues/108
@@ -60,7 +61,8 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
    - Git
    - Node.js v14 (it must be 14 to match the version in Azure/AWS).  
       _Tip: You can install & manage multiple Node versions using tools like [nodist](https://github.com/nullivex/nodist) (Windows) or [n](https://github.com/tj/n) (Linux/MacOS/WSL)_
-   - [Yarn](https://yarnpkg.com/)
+   - [Yarn](https://yarnpkg.com/) (`npm install -g yarn`)
+   - Python (any version, but it must be on your `$PATH` as `python`. If it's called `python3` it won't be found by youtube-dl.)
 
 1. `git clone` the repo and `cd` into it
 
@@ -68,20 +70,18 @@ Simply add [@vreddit_bot](https://t.me/vreddit_bot) to any group, or send it a p
 
 1. Create a `.env` file in the root of the project with the following params:
 
-   ```properties
-   BOT_ERROR_CHAT_ID=<your telegram chat ID>
+   ```bash
    BOT_API_TOKEN=<your personal dev bot API token>
+   BOT_ERROR_CHAT_ID=<your telegram chat ID>  # optional
+   DOWNLOAD_TIMEOUT=300  # optional (default = no timeout)
    ```
-
-   - If you don't konw your telegram chat ID, don't worry. Just set it to 0 and update it later once you've found out your ID from the bot logs.
-   - If you don't have a spare bot you can use for local development, make a new bot using the botfather. Don't try use a bot that you are already using for something else, it won't work.
 
 1. Run `yarn dev` to start local dev server. You can now message your dev bot in telegram to test your code.
 
-### Common Commands
+### Useful Commands
 
 ```sh
-# Run a local bot server connected to the bot configured in the `.env` file:
+# Run a local bot server (configured in .env), restarts any time you save a source code file:
 yarn dev
 
 # Run all tests in watch mode:
@@ -89,13 +89,55 @@ yarn test:watch
 
 # Auto fix lint/formatting issues (where possible):
 yarn lint:fix
-
-# Run the Azure function locally in watch mode:
-yarn start
 ```
+
+### Testing the DynamoDB video info caching
+
+For normal development purposes video caching is disabled, since that reduces the amount of setup needed, plus it's helpful for testing to _not_ have a cache.
+
+However, sometimes you might want to specifically test the caching logic locally.
+
+In that case you will need:
+
+- an AWS account
+- AWS credentials saved in your `~/.aws/credentials` file (see [Loading credentials in Node.js from the shared credentials file](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-shared.html))
+- a DynamoDB table with a primary key called `url` of type `String`.
+
+Then, add these properties to your `.env` file:
+
+```properties
+AWS_PROFILE=<(optional) credentials profile e.g. personal>
+AWS_REGION=<your DynamoDB table region e.g. eu-central-1>
+CACHE_TABLE_NAME=<your DynamoDB table name e.g. video-info-cache-dev>
+```
+
+Now run `yarn dev` as normal, and the cache table you specified will be used.
+
+### Manual deployment to staging
+
+1. Create a new file `.env.staging`, with the following content:
+
+```properties
+AWS_PROFILE=<(optional) credentials profile e.g. personal-account>
+AWS_REGION=eu-central-1
+CACHE_TABLE_NAME=video-info-cache-staging
+
+BOT_API_TOKEN=<staging bot API token>
+BOT_ERROR_CHAT_ID=<your telegram chat id>
+
+SAM_ENV=staging
+```
+
+2. Install the AWS SAM CLI
+3. Run `yarn deploy`
+4. If needed, update the webook URL by running `npx env-cmd -f .env.staging set-webhook <URL>`
 
 ### CI/CD
 
 1. Open a **pull request** to run linting & tests
 1. Push to the **master branch** (e.g. merge a PR) to deploy to **staging** ([@staging_vreddit_bot](https://t.me/staging_vreddit_bot))
 1. Create a tag by running **`yarn release`** to deploy to **prod** ([@vreddit_bot](https://t.me/vreddit_bot))
+
+```
+
+```

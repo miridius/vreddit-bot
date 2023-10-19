@@ -1,4 +1,11 @@
-const { CHAT, FROM, mocked, withFnMocks, env } = require('./helpers');
+const {
+  CHAT,
+  FROM,
+  mocked,
+  withFnMocks,
+  env,
+  setDefaultImpl,
+} = require('./helpers');
 const { message, inline } = require('../src/handler');
 const { CACHE_CHAT } = require('../src/io/environment');
 
@@ -7,27 +14,43 @@ const VideoPost = mocked(require('../src/video-post'));
 
 const id = 'hf352syjjka61';
 const text = `https://v.redd.it/${id}`;
+const entities = [{ offset: 0, length: 31, type: 'url' }];
 const url = 'url';
 const title = 'title';
 
 let post;
 
 beforeEach(() => {
+  jest.resetAllMocks();
   // VideoPost.mockClear();
   post = new VideoPost(env, id);
   Object.assign(post, { id, url, title });
+  setDefaultImpl('env.send', jest.spyOn(env, 'send'));
 });
 
 describe('handler.message', () => {
   const message_id = 42;
-  // @ts-ignore
-  const msgReply = (text) => message({ text, chat: CHAT, message_id }, env);
+  const msgReply = (text, entities) =>
+    // @ts-ignore
+    message({ text, entities, chat: CHAT, message_id }, env);
 
   it('ignores messages without v.redd.it links', () => {
     return withFnMocks(
-      () => expect(msgReply('abcd')).resolves.toBeUndefined(),
-      [VideoPost.findInText, [env, 'abcd'], undefined],
+      () =>
+        expect(
+          msgReply('http://www.example.com', entities),
+        ).resolves.toBeUndefined(),
+      [
+        VideoPost.fromUrls,
+        [env, ['http://www.example.com']],
+        [new VideoPost(env, 'http://www.example.com')],
+      ],
+      [jest.spyOn(env, 'send'), [{ action: 'upload_video' }]],
     );
+  });
+
+  it('ignores messages without URLs', () => {
+    return withFnMocks(() => expect(msgReply('abcd')).resolves.toBeUndefined());
   });
 
   it('re-uses an existing file ID', async () => {
@@ -40,8 +63,8 @@ describe('handler.message', () => {
     };
 
     return withFnMocks(
-      () => expect(msgReply(text)).resolves.toEqual(expected),
-      [VideoPost.findInText, [env, text], post],
+      () => expect(msgReply(text, entities)).resolves.toEqual(expected),
+      [VideoPost.fromUrls, [env, [text]], [post]],
       [post.getMissingInfo, []],
       [post.sourceButton, [], { url }],
     );
@@ -49,8 +72,8 @@ describe('handler.message', () => {
 
   it('downloads and sends a new video', async () => {
     return withFnMocks(
-      () => expect(msgReply(text)).resolves.toBeUndefined(),
-      [VideoPost.findInText, [env, text], post],
+      () => expect(msgReply(text, entities)).resolves.toBeUndefined(),
+      [VideoPost.fromUrls, [env, [text]], [post]],
       [
         jest.spyOn(env, 'send').mockName('env.send'),
         [{ action: 'upload_video' }],
@@ -78,7 +101,7 @@ describe('handler.message', () => {
     it('ignores messages without v.redd.it links', () => {
       return withFnMocks(
         () => expect(inlineReply(text)).resolves.toBeUndefined(),
-        [VideoPost.findInText, [env, text]],
+        [VideoPost.findAllInText, [env, text], []],
       );
     });
 
@@ -86,7 +109,7 @@ describe('handler.message', () => {
       post.fileId = video_file_id;
       await withFnMocks(
         () => expect(inlineReply(text)).resolves.toEqual(results),
-        [VideoPost.findInText, [env, text], post],
+        [VideoPost.findAllInText, [env, text], [post]],
         [post.sourceButton, [], { url }],
       );
       expect(post.downloadAndSend).toHaveBeenCalledTimes(0);
@@ -95,7 +118,7 @@ describe('handler.message', () => {
     it('downloads a new video, sends it to cache, and uses the file ID', async () => {
       return withFnMocks(
         () => expect(inlineReply(text)).resolves.toEqual(results),
-        [VideoPost.findInText, [env, text], post],
+        [VideoPost.findAllInText, [env, text], [post]],
         [
           post.downloadAndSend,
           [CACHE_CHAT],
@@ -110,7 +133,7 @@ describe('handler.message', () => {
     it('returns nothing if the video is too large (-> no fileId)', async () => {
       return withFnMocks(
         () => expect(inlineReply(text)).resolves.toBeUndefined(),
-        [VideoPost.findInText, [env, text], post],
+        [VideoPost.findAllInText, [env, text], [post]],
         [post.downloadAndSend, [CACHE_CHAT]],
       );
     });

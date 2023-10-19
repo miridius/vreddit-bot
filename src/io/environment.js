@@ -1,6 +1,4 @@
-const { existsSync, mkdirSync } = require('fs');
 const os = require('os');
-const { resolve } = require('path');
 
 // limit imposed by telegram API
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
@@ -8,27 +6,45 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 // string describing the runtime OS
 const OS_INFO = `${os.platform()} ${os.arch()} (${os.type()} ${os.version()})`;
 
-// path to ffmpeg executable
-const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
-const FFMPEG =
-  process.env.FFMPEG ||
-  resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
+// Add path to ffmpeg executable
+process.env.PATH += ':./ffmpeg/bin';
+// const fileExtension = os.platform().startsWith('win') ? '.exe' : '';
+// const FFMPEG =
+//   process.env.FFMPEG ||
+//   resolve(__dirname, `../../ffmpeg/bin/ffmpeg${fileExtension}`);
 
 // Load constants from environment variables, throw an error if they are missing
-/** @param {string} key */
-const loadEnvOrThrow = (key) => {
+/**
+ * @template {boolean} T
+ * @param {string} key
+ * @param {T} [toInteger]
+ * @returns {T extends true ? number : string}
+ */
+const loadEnvOrThrow = (key, toInteger) => {
   const value = process.env[key];
   if (!value) throw new Error(`${key} environment variable not set!`);
+  if (toInteger) {
+    const intValue = parseInt(value);
+    if (isNaN(intValue)) {
+      throw new Error(`${key} env var is not a valid integer: ${value}`);
+    }
+    // @ts-ignore
+    return intValue;
+  }
+  // @ts-ignore
   return value;
 };
+
 const BOT_API_TOKEN = loadEnvOrThrow('BOT_API_TOKEN');
-const BOT_ERROR_CHAT_ID = parseInt(loadEnvOrThrow('BOT_ERROR_CHAT_ID'));
+
 // make sure chat ID is a number
-if (isNaN(BOT_ERROR_CHAT_ID)) {
-  throw new Error(`BOT_ERROR_CHAT_ID env var is not a valid integer`);
-}
-const CACHE_DIR = resolve(loadEnvOrThrow('HOME'), '.vreddit-bot-cache');
-if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR);
+const BOT_ERROR_CHAT_ID = loadEnvOrThrow('BOT_ERROR_CHAT_ID', true);
+
+// cache table is mandatory in production but optional when running locally.
+const CACHE_TABLE_NAME =
+  process.env.NODE_ENV === 'production'
+    ? loadEnvOrThrow('CACHE_TABLE_NAME', false)
+    : process.env.CACHE_TABLE_NAME;
 
 /** @type {import('serverless-telegram').Chat} */
 const CACHE_CHAT = {
@@ -52,8 +68,7 @@ module.exports = {
   BOT_API_TOKEN,
   BOT_ERROR_CHAT_ID,
   CACHE_CHAT,
-  CACHE_DIR,
-  FFMPEG,
+  CACHE_TABLE_NAME,
   MAX_FILE_SIZE_BYTES,
   OS_INFO,
   log,

@@ -1,0 +1,41 @@
+version = 0.1
+[default]
+[default.global.parameters]
+stack_name = "vreddit-bot-dev"
+[default.deploy]
+[default.deploy.parameters]
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
+s3_prefix = "vreddit-bot-dev"
+region = "eu-central-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
+[default.logs.parameters]
+name = "WebhookFunction"
+
+[staging]
+[staging.global.parameters]
+stack_name = "vreddit-bot-staging"
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "vreddit-bot-staging"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
+s3_prefix = "vreddit-bot-staging"
+region = "eu-central-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
+[staging.logs.parameters]
+name = "WebhookFunction"
+
+[prod]
+[prod.global.parameters]
+stack_name = "vreddit-bot"
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "vreddit-bot"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-o69yjxke7qem"
+s3_prefix = "vreddit-bot"
+region = "eu-central-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
+[prod.logs.parameters]
+name = "WebhookFunction"

@@ -1,108 +1,179 @@
 const { MAX_FILE_SIZE_BYTES } = require('./io/environment');
-const cache = require('./io/file-cache');
+const cache = require('./io/ddb-cache');
 const reddit = require('./io/reddit-api');
 const { downloadVideo } = require('./io/download-video');
+const { unlink } = require('fs/promises');
 
-const idRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
-const urlRegex =
-  /https?:\/\/(www\.)?reddit\.com\/r\/\w+\/comments\/\w+\/\w+\/?/;
-/** @param {string} [text] */
-const findId = (text) => text?.match(idRegex)?.[1];
-/** @param {string} [text] */
-const findUrl = (text) => text?.match(urlRegex)?.[0];
+const DEBOUNCE_MS = parseInt(process.env.DEBOUNCE_MS || '150');
+
+const vredditIdRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
 
 class VideoPost {
   /**
+   * Create a new VideoPost, including any cached info (if present)
    * @param {import('serverless-telegram').Env} env
-   * @param {string} [text]
+   * @param {string} url video URL
    */
-  static async findInText(env, text) {
-    if (!text) return;
-    const id = findId(text);
-    return id ? new VideoPost(env, id) : VideoPost.fromUrl(env, findUrl(text));
+  static async loadCachedInfo(env, url) {
+    const { sourceUrl, title, fileId } = (await cache.read(url)) || {};
+    return new VideoPost(env, url, sourceUrl, title, fileId);
   }
 
   /**
    * @param {import('serverless-telegram').Env} env
-   * @param {string} [url]
+   * @param {string} url video URL
+   * @param {string} [sourceUrl] reddit comments URL for v.redd.it links
+   * @param {string} [title] video title
+   * @param {string} [fileId] telegram file ID for previously uploaded videos
    */
-  static async fromUrl(env, url) {
-    if (!url) return;
-    const { videoUrl, title } = await reddit.getPostData(url);
-    const id = findId(videoUrl);
-    if (id) return new VideoPost(env, id, url, title);
-  }
-
-  /**
-   * @param {import('serverless-telegram').Env} env
-   * @param {string} id
-   * @param {string} [url]
-   * @param {string} [title]
-   * @param {string} [fileId]
-   */
-  constructor(env, id, url, title, fileId) {
+  constructor(env, url, sourceUrl, title, fileId) {
     this.env = env;
-    this.id = id;
-    const cachedInfo = cache.read(this.id);
-    this.url = url || cachedInfo.url;
-    this.title = title || cachedInfo.title;
-    this.fileId = fileId || cachedInfo.fileId;
+    this.url = url;
+    this.sourceUrl = sourceUrl;
+    this.title = title;
+    this.fileId = fileId;
+    this.status = '';
+    this.statusMsg = undefined;
+    this.timer = undefined;
+    this.sendStatus = 'message' in this.env;
+  }
+
+  statusLog(/** @type {string} */ message = '', debounceMs = DEBOUNCE_MS) {
+    this.env.info(message);
+    this.status += message + '\n';
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => this._updateStatus(this.status), debounceMs);
+  }
+
+  setStatus(/** @type {string} */ text, chat, replyTo) {
+    if (this.timer) clearTimeout(this.timer);
+    this.status = text + '\n';
+    return this._updateStatus(this.status, chat, replyTo);
+  }
+
+  async _updateStatus(/** @type {string} */ text, chat, replyTo) {
+    if (!this.sendStatus) return;
+    const content = {
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      disable_notification: true,
+    };
+    if (!this.statusMsg) {
+      if (!chat) return;
+      return (this.statusMsg = this.env.send({
+        chat_id: chat.id,
+        reply_to_message_id: replyTo,
+        ...content,
+      }));
+    } else {
+      return this.env.send({
+        method: 'editMessageText',
+        message_id: (await this.statusMsg).message_id,
+        ...content,
+      });
+    }
   }
 
   /**
    * @param {import('serverless-telegram').Chat} chat
    * @param {number} [replyTo] ID of the original message to reply to
+   * @returns {Promise<import('serverless-telegram').MessageResponse>}
    */
   async downloadAndSend(chat, replyTo) {
-    const [{ path, width, height, size }] = await Promise.all([
-      downloadVideo(this.id),
-      this.getMissingInfo(),
-    ]);
-    if (size > MAX_FILE_SIZE_BYTES) {
-      const text = `Video too large (${(size / 1024 / 1024).toFixed(2)} MB)`;
-      this.env.error(text);
-      return chat.type === 'private' && { text, reply_to_message_id: replyTo };
+    // Don't spam group chats
+    this.sendStatus = this.sendStatus && chat.type === 'private';
+    // Inform the users that the work is in progress since it might take a while
+    // NOTE: we don't wait for this to complete, just fire it and let it run
+    if (this.sendStatus) this.env.send({ action: 'upload_video' });
+
+    this.setStatus(`Downloading ${this.url}...`, chat, replyTo);
+
+    let title, video;
+    try {
+      // @ts-ignore
+      [{ title, ...video }] = await Promise.all([
+        downloadVideo(this),
+        this.getVredditInfo(),
+      ]);
+      if (video.error) {
+        await this.setStatus(video.error);
+        return;
+      }
+      if (video.size > MAX_FILE_SIZE_BYTES) {
+        const sizeMb = (video.size / 1024 / 1024).toFixed(2);
+        await this.setStatus(`Video too large (${sizeMb} MB): ${this.url}`);
+        return;
+      }
+
+      if (this.sourceUrl) this.statusLog(`<b>source</b>: ${this.sourceUrl}`);
+      if (this.title) {
+        this.statusLog(`<b>title</b>: ${this.title}`);
+      } else {
+        this.title = title;
+      }
+
+      // Send the video to telegram
+      await this.sendVideo(chat, video, replyTo);
+    } catch (e) {
+      this.statusLog('An unexpected error occurred, please try again later');
+      throw e;
+    } finally {
+      if (video?.video) await unlink(video.video).catch(() => {});
     }
-    // Send the video to telegram
-    return this.sendVideo(chat, path, width, height, replyTo);
   }
 
-  async getMissingInfo() {
-    if (!this.url) {
-      this.url = await reddit.getCommentsUrl(this.id);
+  /**
+   * @param {string} text
+   * @param {import('serverless-telegram').Chat} chat
+   * @param {number} [replyTo]
+   * @returns {import('serverless-telegram').MessageResponse}
+   */
+  errorResponse(text, chat, replyTo) {
+    this.env.error(text);
+    return chat.type === 'private' && { text, reply_to_message_id: replyTo };
+  }
+
+  /** For v.redd.it urls, gets the comments url and title from reddit */
+  async getVredditInfo() {
+    if (!this.sourceUrl) {
+      const vredditId = this.url.match(vredditIdRegex)?.[1];
+      if (vredditId) this.sourceUrl = await reddit.getCommentsUrl(vredditId);
     }
-    if (this.url && !this.title) {
-      this.title = (await reddit.getPostData(this.url)).title;
+    if (this.sourceUrl && !this.title) {
+      this.title = (await reddit.getPostData(this.sourceUrl)).title;
       cache.write(this);
     }
   }
 
   /**
    * @param {import('serverless-telegram').Chat} chat
-   * @param {import('fs').PathLike} path
-   * @param {number} [width]
-   * @param {number} [height]
+   * @param {{video: import('fs').PathLike, width?: number, height?: number,
+   *  duration?: number }} video
    * @param {number} [replyTo]
    */
-  async sendVideo(chat, path, width, height, replyTo) {
+  async sendVideo(chat, video, replyTo) {
+    this.statusLog('\nUploading...');
     const result = await this.env.send({
-      chat_id: chat.id,
-      video: path,
-      width,
-      height,
+      method: 'sendVideo', // necessary for inline queries
+      ...video,
       caption: this.title,
+      chat_id: chat.id,
       reply_to_message_id: replyTo,
+      allow_sending_without_reply: replyTo && 'true',
       ...this.sourceButton(),
     });
     this.fileId = result?.video?.file_id;
     this.env.debug('fileId:', this.fileId);
-    cache.write(this);
+    await cache.write(this);
   }
 
   sourceButton() {
     return {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Source', url: this.url }]],
+        inline_keyboard: [
+          [{ text: 'Source', url: this.sourceUrl || this.url }],
+        ],
       },
     };
   }

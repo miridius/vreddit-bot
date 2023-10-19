@@ -6,10 +6,17 @@
     "name": "David Drem Rolle",
     "email": "dave@rolle.family"
   },
+  "engines": {
+    "node": "^14"
+  },
   "license": "UNLICENSED",
   "private": "true",
+  "files": [
+    "src",
+    "ffmpeg"
+  ],
   "scripts": {
-    "dev": "nodemon -x env-cmd start-dev-server",
+    "dev": "nodemon -x env-cmd start-dev-server src/webhook.webhook",
     "start": "env-cmd func start",
     "lint": "eslint \"**/*.js\" && prettier -c \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
     "lint:fix": "eslint --fix \"**/*.js\" && prettier -w \"**/*.{js,css,md,json}\" --ignore-path .gitignore",
@@ -17,26 +24,33 @@
     "test:watch": "jest --watchAll --runInBand --no-cache",
     "test:update": "env-cmd jest -u",
     "update-deps": "ncu -u -x husky --doctor && yarn lint:fix && ncu -u -t minor --doctor && yarn lint",
-    "release": "ncu -e2 -t minor && npx np --no-publish"
+    "release": "ncu -e2 -t minor && npx np --no-publish",
+    "deploy": "sam build && env-cmd -f .env.staging npm run sam-deploy",
+    "deploy-prod": "sam build && env-cmd -f .env.prod npm run sam-deploy",
+    "sam-deploy": "sam deploy --config-env $SAM_ENV --parameter-overrides BotApiToken=$BOT_API_TOKEN BotErrorChatId=$BOT_ERROR_CHAT_ID CacheTableName=$CACHE_TABLE_NAME",
+    "logs": "env-cmd -f .env.staging npm run sam-logs",
+    "sam-logs": "sam logs --config-env $SAM_ENV -t"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.34.0",
+    "filenamify": "^4.3.0",
     "form-data": "^4.0.0",
-    "node-fetch": "^2.6.2",
-    "serverless-telegram": "^0.6.0"
+    "node-fetch": "^2.6.5",
+    "serverless-telegram": "^0.6.1",
+    "youtube-dl-exec": "^2.4.15"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.1",
+    "@types/jest": "^27.0.2",
     "env-cmd": "^10.1.0",
     "eslint": "^7.32.0",
-    "eslint-plugin-jest": "^24.4.0",
-    "filenamify": "^4.3.0",
+    "eslint-plugin-jest": "^24.4.2",
     "husky": "^3.1.0",
-    "jest": "^27.1.1",
+    "jest": "^27.2.2",
     "lint-staged": "^11.1.2",
     "nock": "^13.1.3",
-    "nodemon": "^2.0.12",
+    "nodemon": "^2.0.13",
     "npm-check-updates": "^11.8.5",
-    "prettier": "^2.4.0"
+    "prettier": "^2.4.1"
   },
   "prettier": {
     "singleQuote": true,

@@ -1,9 +1,0 @@
-{
-  "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "",
-    "FUNCTIONS_WORKER_RUNTIME": "node",
-    "AzureFunctionsJobHost__logging__applicationInsights__samplingSettings__isEnabled": "false",
-    "AzureFunctionsJobHost__logging__logLevel__Function": "trace"
-  }
-}
