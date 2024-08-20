@@ -5,8 +5,17 @@ const { downloadVideo } = require('./io/download-video');
 const { unlink } = require('fs/promises');
 
 const DEBOUNCE_MS = parseInt(process.env.DEBOUNCE_MS || '150');
+const MAX_MESSAGE_LEN = 4000; // actually 4096, but leave some buffer just in case
 
 const vredditIdRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
+
+const escapeHtml = (str) =>
+  str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
 class VideoPost {
   /**
@@ -38,17 +47,37 @@ class VideoPost {
     this.sendStatus = 'message' in this.env;
   }
 
-  statusLog(/** @type {string} */ message = '', debounceMs = DEBOUNCE_MS) {
-    this.env.info(message);
-    this.status += message + '\n';
+  async statusLog(
+    /** @type {string} */ message = '',
+    debounceMs = DEBOUNCE_MS,
+    allowHtml = false,
+  ) {
     if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => this._updateStatus(this.status), debounceMs);
+    this.env.info(message);
+    let text = allowHtml ? message : escapeHtml(message);
+    if (text.length > MAX_MESSAGE_LEN) text = text.slice(0, MAX_MESSAGE_LEN);
+    text += '\n';
+    if (this.status.length + text.length > MAX_MESSAGE_LEN) {
+      // start a new message
+      this.statusMsg = undefined;
+      this.status = text;
+    } else {
+      this.status += text;
+    }
+    if (debounceMs > 0) {
+      this.timer = setTimeout(
+        () => this._updateStatus(this.status),
+        debounceMs,
+      );
+    } else {
+      await this._updateStatus(this.status);
+    }
   }
 
-  setStatus(/** @type {string} */ text, chat, replyTo) {
+  async setStatus(/** @type {string} */ text, chat, replyTo) {
     if (this.timer) clearTimeout(this.timer);
     this.status = text + '\n';
-    return this._updateStatus(this.status, chat, replyTo);
+    await this._updateStatus(this.status, chat, replyTo);
   }
 
   async _updateStatus(/** @type {string} */ text, chat, replyTo) {
@@ -61,15 +90,15 @@ class VideoPost {
     };
     if (!this.statusMsg) {
       if (!chat) return;
-      return (this.statusMsg = this.env.send({
+      this.statusMsg = await this.env.send({
         chat_id: chat.id,
         reply_to_message_id: replyTo,
         ...content,
-      }));
+      });
     } else {
-      return this.env.send({
+      await this.env.send({
         method: 'editMessageText',
-        message_id: (await this.statusMsg).message_id,
+        message_id: this.statusMsg.message_id,
         ...content,
       });
     }
@@ -87,7 +116,7 @@ class VideoPost {
     // NOTE: we don't wait for this to complete, just fire it and let it run
     if (this.sendStatus) this.env.send({ action: 'upload_video' });
 
-    this.setStatus(`Downloading ${this.url}...`, chat, replyTo);
+    this.setStatus(`<b>Downloading</b> ${this.url}`, chat, replyTo);
 
     let title, video;
     try {
@@ -97,18 +126,21 @@ class VideoPost {
         this.getVredditInfo(),
       ]);
       if (video.error) {
-        this.statusLog('\n' + video.error);
+        await this.statusLog('\n' + video.error, 0);
         return;
       }
       if (video.size > MAX_FILE_SIZE_BYTES) {
         const sizeMb = (video.size / 1024 / 1024).toFixed(2);
-        this.statusLog(`\nVideo too large (${sizeMb} MB): ${this.url}`);
+        await this.statusLog(
+          `\nVideo too large (${sizeMb} MB): ${this.url}`,
+          0,
+        );
         return;
       }
 
       if (this.sourceUrl) this.statusLog(`<b>source</b>: ${this.sourceUrl}`);
       if (this.title) {
-        this.statusLog(`<b>title</b>: ${this.title}`);
+        this.statusLog(`<b>title</b>: ${this.title}`, 1000, true);
       } else {
         this.title = title;
       }
@@ -116,7 +148,7 @@ class VideoPost {
       // Send the video to telegram
       await this.sendVideo(chat, video, replyTo);
     } catch (e) {
-      this.statusLog('An unexpected error occurred, please try again later');
+      this.statusLog('An unexpected error occurred, please try again later', 0);
       throw e;
     } finally {
       if (video?.video) await unlink(video.video).catch(() => {});
@@ -153,7 +185,7 @@ class VideoPost {
    * @param {number} [replyTo]
    */
   async sendVideo(chat, video, replyTo) {
-    this.statusLog('\nUploading...');
+    this.statusLog('\n<b>Uploading...</b>', 0, true);
     const result = await this.env.send({
       method: 'sendVideo', // necessary for inline queries
       ...video,

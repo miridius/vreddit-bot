@@ -18,7 +18,7 @@ const shouldUpdate = () => {
   }
 };
 
-const exists = async (path) => {
+const exists = async (/** @type {import("fs").PathLike} */ path) => {
   try {
     await access(path, constants.R_OK);
     return true;
@@ -34,13 +34,12 @@ const getErrorMessage = (url, { stderr, originalMessage, message }) => {
   if (originalMessage === 'Timed out') {
     return `Video download timed out after ${DOWNLOAD_TIMEOUT} seconds`;
   }
-  if (!stderr) return originalMessage || message;
-  if (stderr.includes('requested format not available')) {
+  if (stderr?.includes('requested format not available')) {
     return `Video too large (> 50 MB) or no supported formats available: ${url}`;
-  } else if (stderr.includes('Unable to extract video url')) {
+  } else if (stderr?.includes('Unable to extract video url')) {
     return `Unable to extract video url from ${url}.`;
   } else {
-    return stderr.match(/ERROR: (.*)/)?.[1] || stderr;
+    return stderr?.match(/ERROR: (.*)/)?.[1] || originalMessage || message;
   }
 };
 
@@ -94,15 +93,12 @@ const execYtdl = async (post, proxy) => {
     subprocess.stdout?.setEncoding('utf-8');
     subprocess.stderr?.setEncoding('utf-8');
     subprocess.stdout?.on('data', (s) => post.env.debug(s.trim()));
-    subprocess.stderr?.on('data', async (s) =>
-      post.statusLog(s.trim().replace(/</g, '&lt;')),
-    );
+    subprocess.stderr?.on('data', async (s) => post.statusLog(s.trim()));
 
     post.env.debug('subprocess result', await subprocess);
   } catch (/** @type {any} */ e) {
     post.env.error(e);
     await rm(output.replace('.tmp', '*')).catch(() => {});
-    // @ts-ignore
     return { error: getErrorMessage(url, e) };
   }
 
@@ -128,6 +124,7 @@ const execYtdl = async (post, proxy) => {
 const downloadVideo = async (post, httpProxy) => {
   // Use youtube-dl to download the video
   const res = await execYtdl(post, httpProxy);
+  post.env.info('res', res);
   if ('error' in res) return { error: res.error };
   const { path, infoJson } = res;
 
