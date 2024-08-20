@@ -5,6 +5,7 @@ const { resolve } = require('path');
 const youtubedl = require('youtube-dl-exec');
 const { constants } = require('fs');
 const filenamify = require('filenamify');
+const he = require('he');
 
 const UPDATE_INTERVAL_MS = 1000 * 60 * 60 * 24; // 1 day
 /** @type {Date | undefined} */
@@ -65,7 +66,7 @@ const format =
  * @param {string} [proxy] optional proxy URL e.g. http://127.0.0.1:8080
  * @returns {Promise<{path: string, infoJson: string} | {error: string}>}
  */
-const execYtdl = async (post, proxy) => {
+const execYtdl = async (post, proxy, verbose = false) => {
   const output = uniqueTempPath('tmp');
   post.env.debug({ output });
 
@@ -84,7 +85,7 @@ const execYtdl = async (post, proxy) => {
         noProgress: true,
         mergeOutputFormat: 'mp4',
         recodeVideo: 'mp4',
-        verbose: true,
+        verbose: verbose || undefined,
         update: shouldUpdate(),
       },
       { timeout: DOWNLOAD_TIMEOUT * 1000 },
@@ -92,10 +93,14 @@ const execYtdl = async (post, proxy) => {
 
     subprocess.stdout?.setEncoding('utf-8');
     subprocess.stderr?.setEncoding('utf-8');
-    subprocess.stdout?.on('data', (s) => post.env.debug(s.trim()));
-    subprocess.stderr?.on('data', async (s) => post.statusLog(s.trim()));
+    subprocess.stdout?.on('data', (s) =>
+      verbose ? post.statusLog(s.trim()) : post.env.debug(s.trim()),
+    );
+    subprocess.stderr?.on('data', async (s) =>
+      verbose ? post.statusLog(s.trim()) : post.env.warn(s.trim()),
+    );
 
-    post.env.debug('subprocess result', await subprocess);
+    await subprocess;
   } catch (/** @type {any} */ e) {
     post.env.error(e);
     await rm(output.replace('.tmp', '*')).catch(() => {});
@@ -121,9 +126,9 @@ const execYtdl = async (post, proxy) => {
  * @param {string} [httpProxy] optional proxy URL e.g. http://127.0.0.1:8080
  * @returns {Promise<{video: string, size: number, [key: string]: any} | {error: string}>}
  */
-const downloadVideo = async (post, httpProxy) => {
+const downloadVideo = async (post, httpProxy, verbose = false) => {
   // Use youtube-dl to download the video
-  const res = await execYtdl(post, httpProxy);
+  const res = await execYtdl(post, httpProxy, verbose);
   post.env.info('res', res);
   if ('error' in res) return { error: res.error };
   const { path, infoJson } = res;
@@ -168,9 +173,10 @@ const downloadVideo = async (post, httpProxy) => {
   post.statusLog('Done.\n');
 
   const logInfo = (key, xform = (x) => x) =>
-    info[key] && post.statusLog(`<b>${key}</b>: ${xform(info[key])}`);
+    info[key] &&
+    post.statusLog(`<b>${key}</b>: ${xform(info[key])}`, undefined, true);
 
-  logInfo('title');
+  logInfo('title', he.encode);
   logInfo('duration', (d) => `${Math.round(d)} sec`);
   logInfo('size', (s) => `${(s / 1024 / 1024).toFixed(2)} MB`);
   logInfo('resolution');

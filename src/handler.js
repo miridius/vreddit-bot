@@ -16,6 +16,9 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
   env.debug('urls:', urls);
   if (!urls.length) return;
 
+  const verbose = text.startsWith('/verbose');
+  env.debug({ verbose });
+
   // try to download (or load from cache) each one
   const results = await Promise.all(
     urls.map(async (url) => {
@@ -30,7 +33,7 @@ exports.message = async ({ text, chat, message_id, entities }, env) => {
             reply_to_message_id: message_id,
             ...post.sourceButton(),
           }
-        : post.downloadAndSend(chat, message_id);
+        : post.downloadAndSend(chat, message_id, verbose);
     }),
   );
 

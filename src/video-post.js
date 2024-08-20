@@ -3,19 +3,13 @@ const cache = require('./io/ddb-cache');
 const reddit = require('./io/reddit-api');
 const { downloadVideo } = require('./io/download-video');
 const { unlink } = require('fs/promises');
+const he = require('he');
 
 const DEBOUNCE_MS = parseInt(process.env.DEBOUNCE_MS || '150');
-const MAX_MESSAGE_LEN = 4000; // actually 4096, but leave some buffer just in case
+const MAX_LENGTH = 4096;
+const TRUNCATED_MSG = '\n<i>--- message too long ---</i>';
 
 const vredditIdRegex = /https?:\/\/v\.redd\.it\/(\w+)/;
-
-const escapeHtml = (str) =>
-  str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 
 class VideoPost {
   /**
@@ -54,16 +48,7 @@ class VideoPost {
   ) {
     if (this.timer) clearTimeout(this.timer);
     this.env.info(message);
-    let text = allowHtml ? message : escapeHtml(message);
-    if (text.length > MAX_MESSAGE_LEN) text = text.slice(0, MAX_MESSAGE_LEN);
-    text += '\n';
-    if (this.status.length + text.length > MAX_MESSAGE_LEN) {
-      // start a new message
-      this.statusMsg = undefined;
-      this.status = text;
-    } else {
-      this.status += text;
-    }
+    this.status += (allowHtml ? message : he.encode(message)) + '\n';
     if (debounceMs > 0) {
       this.timer = setTimeout(
         () => this._updateStatus(this.status),
@@ -82,6 +67,10 @@ class VideoPost {
 
   async _updateStatus(/** @type {string} */ text, chat, replyTo) {
     if (!this.sendStatus) return;
+    if (text.length > MAX_LENGTH) {
+      text = text.slice(0, MAX_LENGTH - TRUNCATED_MSG.length) + TRUNCATED_MSG;
+      this.sendStatus = false; // prevent further updates as they are pointless
+    }
     const content = {
       text,
       parse_mode: 'HTML',
@@ -109,7 +98,7 @@ class VideoPost {
    * @param {number} [replyTo] ID of the original message to reply to
    * @returns {Promise<import('serverless-telegram').MessageResponse>}
    */
-  async downloadAndSend(chat, replyTo) {
+  async downloadAndSend(chat, replyTo, verbose = false) {
     // Don't spam group chats
     this.sendStatus = this.sendStatus && chat.type === 'private';
     // Inform the users that the work is in progress since it might take a while
@@ -122,7 +111,7 @@ class VideoPost {
     try {
       // @ts-ignore
       [{ title, ...video }] = await Promise.all([
-        downloadVideo(this),
+        downloadVideo(this, undefined, verbose),
         this.getVredditInfo(),
       ]);
       if (video.error) {
