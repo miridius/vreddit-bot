@@ -97,12 +97,12 @@ class VideoPost {
         this.getVredditInfo(),
       ]);
       if (video.error) {
-        await this.setStatus(video.error);
+        this.statusLog('\n' + video.error);
         return;
       }
       if (video.size > MAX_FILE_SIZE_BYTES) {
         const sizeMb = (video.size / 1024 / 1024).toFixed(2);
-        await this.setStatus(`Video too large (${sizeMb} MB): ${this.url}`);
+        this.statusLog(`\nVideo too large (${sizeMb} MB): ${this.url}`);
         return;
       }
 

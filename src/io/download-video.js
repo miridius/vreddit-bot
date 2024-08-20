@@ -1,4 +1,4 @@
-const { log, isDev } = require('./environment');
+require('./environment');
 const { stat, access, rm, rename } = require('fs/promises');
 const { tmpdir } = require('os');
 const { resolve } = require('path');
@@ -68,13 +68,14 @@ const format =
  */
 const execYtdl = async (post, proxy) => {
   const output = uniqueTempPath('tmp');
+  post.env.debug({ output });
 
   const url = post.url.toLowerCase().startsWith('http')
     ? post.url
     : `https://${post.url}`;
 
   try {
-    const subprocess = youtubedl(
+    const subprocess = youtubedl.exec(
       url,
       {
         format,
@@ -84,7 +85,7 @@ const execYtdl = async (post, proxy) => {
         noProgress: true,
         mergeOutputFormat: 'mp4',
         recodeVideo: 'mp4',
-        // verbose: true,
+        verbose: true,
         update: shouldUpdate(),
       },
       { timeout: DOWNLOAD_TIMEOUT * 1000 },
@@ -92,14 +93,14 @@ const execYtdl = async (post, proxy) => {
 
     subprocess.stdout?.setEncoding('utf-8');
     subprocess.stderr?.setEncoding('utf-8');
-    subprocess.stdout?.on('data', (s) => log.debug(s.trim()));
+    subprocess.stdout?.on('data', (s) => post.env.debug(s.trim()));
     subprocess.stderr?.on('data', async (s) =>
       post.statusLog(s.trim().replace(/</g, '&lt;')),
     );
 
-    await subprocess;
+    post.env.debug('subprocess result', await subprocess);
   } catch (/** @type {any} */ e) {
-    log.error(e);
+    post.env.error(e);
     await rm(output.replace('.tmp', '*')).catch(() => {});
     // @ts-ignore
     return { error: getErrorMessage(url, e) };
@@ -132,16 +133,18 @@ const downloadVideo = async (post, httpProxy) => {
 
   // Load info from json
   const info = require(infoJson);
+  // post.env.debug('youtube-dl info JSON:', info);
+
   info.resolution = info.resolution || `${info.width}x${info.height}`;
   if (info.title === info.extractor && info.playlist_title) {
     info.title = info.playlist_title;
   }
   if (info.title === info.id) info.title = undefined;
 
-  // Clean up temp file in background (inentionally do not await)
-  if (!isDev) rm(infoJson);
+  // Clean up temp file in background (intentionally do not await)
+  rm(infoJson);
 
-  // rename the file to something more sensical before upload
+  // rename the file to something more sensible before upload
   const video = resolve(
     tmpdir(),
     filenamify(info.title || info.id, { replacement: '_' }) + '.mp4',
@@ -153,15 +156,15 @@ const downloadVideo = async (post, httpProxy) => {
   info.size = size;
 
   // log all formats for debugging purposes
-  console.table(
-    info.formats?.map(({ format, ext, vcodec, acodec, filesize }) => ({
-      format,
-      ext,
-      vcodec,
-      acodec,
-      mb: filesize / 1024 / 1024,
-    })),
-  );
+  // console.table(
+  //   info.formats?.map(({ format, ext, vcodec, acodec, filesize }) => ({
+  //     format,
+  //     ext,
+  //     vcodec,
+  //     acodec,
+  //     mb: filesize / 1024 / 1024,
+  //   })),
+  // );
 
   // post.statusLog(`\nvideo id: ${info.extractor}/${info.id}`);
 
