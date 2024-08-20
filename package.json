@@ -7,7 +7,7 @@
     "email": "dave@rolle.family"
   },
   "engines": {
-    "node": "^14"
+    "node": "^16 || ^18 || ^20"
   },
   "license": "UNLICENSED",
   "private": "true",
@@ -36,7 +36,7 @@
     "filenamify": "^4.3.0",
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.5",
-    "serverless-telegram": "^0.6.1",
+    "serverless-telegram": "^0.8.3",
     "youtube-dl-exec": "^2.4.15"
   },
   "devDependencies": {
