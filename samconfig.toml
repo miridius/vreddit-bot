@@ -10,7 +10,7 @@ region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
 [default.logs.parameters]
-name = "WebhookFunction"
+region = "eu-central-1"
 
 [staging]
 [staging.global.parameters]
@@ -24,7 +24,7 @@ region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
 [staging.logs.parameters]
-name = "WebhookFunction"
+region = "eu-central-1"
 
 [prod]
 [prod.global.parameters]
@@ -38,4 +38,4 @@ region = "eu-central-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = ["WebhookFunction=192461062174.dkr.ecr.eu-central-1.amazonaws.com/vredditbotfe383b7b/webhookfunction2cdba7a2repo"]
 [prod.logs.parameters]
-name = "WebhookFunction"
+region = "eu-central-1"
