@@ -1,6 +1,6 @@
 /* eslint-disable jest/expect-expect */
 const { withFnMocks, setDefaultImpls, mocked, env } = require('../helpers');
-const cache = require('../../src/io/file-cache');
+const cache = require('../../src/io/ddb-cache');
 const VideoPost = require('../../src/video-post');
 const { resolve } = require('path');
 const { CACHE_DIR } = require('../../src/io/environment');

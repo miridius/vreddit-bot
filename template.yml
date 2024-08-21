@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Description: vreddit-bot
+
+Parameters:
+  BotApiToken:
+    Description: Telegram Bot API Token
+    Type: String
+  BotErrorChatId:
+    Description: ID of the telegram chat (or user) to send error reports to
+    Type: Number
+  CacheTableName:
+    Description: DynamoDB table name for caching previously sent video info
+    Type: String
+
+Resources:
+  WebhookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageConfig:
+        Command: ['src/webhook.webhook']
+      # At 1,769 MB, a function has the equivalent of one vCPU
+      MemorySize: 1769
+      Timeout: 29
+      Environment:
+        Variables:
+          BOT_API_TOKEN: !Ref BotApiToken
+          BOT_ERROR_CHAT_ID: !Ref BotErrorChatId
+          CACHE_TABLE_NAME: !Ref CacheTableName
+          DOWNLOAD_TIMEOUT: 20
+          NODE_ENV: production
+      Events:
+        Webhook:
+          Type: HttpApi
+          Properties:
+            Path: /webhook
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CacheTableName
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+
+  CacheTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref CacheTableName
+      PrimaryKey:
+        Name: url
+        Type: String
+
+Outputs:
+  WebhookApi:
+    Description: 'HTTP API endpoint URL for Telegram webhook'
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook'

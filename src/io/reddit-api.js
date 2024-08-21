@@ -4,13 +4,13 @@ const { log } = require('./environment');
 /**
  * Get reddit comments URL from v.redd.it URL
  * @param {string} id - v.redd.it id (the part after the slash)
- * @returns {Promise<string | null>} Link to reddit comments page
+ * @returns {Promise<string | undefined>} Link to reddit comments page
  */
 exports.getCommentsUrl = (id) => {
   log.info('Getting comments URL for:', id);
   return fetch(`https://www.reddit.com/video/${id}`, {
     redirect: 'manual',
-  }).then((r) => r.headers.get('location'));
+  }).then((r) => r.headers.get('location') || undefined);
 };
 
 /**

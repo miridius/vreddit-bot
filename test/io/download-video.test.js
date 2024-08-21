@@ -1,4 +1,4 @@
-const { createProxyServer, log } = require('../helpers');
+const { createProxyServer, log, env } = require('../helpers');
 const {
   downloadVideo,
   deleteIfExisting,
@@ -10,6 +10,7 @@ const filenamify = require('filenamify');
 const { tmpdir } = require('os');
 const { existsSync, copyFileSync, unlinkSync } = require('fs');
 const { resolve } = require('path');
+const VideoPost = require('../../src/video-post');
 
 nock.back.fixtures = __dirname + '/__fixtures__/';
 nock.back.setMode(process.env.CI ? 'lockdown' : 'record');
@@ -29,8 +30,9 @@ afterAll(() => {
 
 // TEST DATA
 const videoId = 'hf352syjjka61';
+const url = `https://v.redd.it/${videoId}`;
 
-const tempVideoFile = resolve(tmpdir(), `${videoId}.mp4`);
+const tempVideoFile = resolve(tmpdir(), `${filenamify(url)}.mp4`);
 
 const width = 406;
 const height = 720;
@@ -59,15 +61,18 @@ describe('downloadVideo', () => {
   it('saves video file from v.redd.it URL', async () => {
     _deleteIfExisting(tempVideoFile);
     await expect(
-      withNockback(downloadVideo)(videoId, `http://127.0.0.1:${PROXY_PORT}`),
+      withNockback(downloadVideo)(
+        new VideoPost(env, url),
+        `http://127.0.0.1:${PROXY_PORT}`,
+      ),
     ).resolves.toEqual({ path: tempVideoFile, size, width, height });
     expect(existsSync(tempVideoFile)).toBe(true);
     _deleteIfExisting(tempVideoFile);
   });
-  it('throws an error in case of failure', async () => {
+  it(`returns undefined if a URL can't be downloaded as a video`, async () => {
     return expect(
-      withNockback(downloadVideo)('does not exist!'),
-    ).rejects.toThrow(/Command failed/);
+      withNockback(downloadVideo)(new VideoPost(env, 'does not exist!')),
+    ).resolves.toBeUndefined();
   });
 });
 

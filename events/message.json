@@ -1,0 +1,3 @@
+{
+  "body": "{\"update_id\":1,\"message\":{\"text\":\"https://v.redd.it/hf352syjjka61\",\"entities\":[{\"offset\":0,\"length\":31,\"type\":\"url\"}],\"chat\":{\"id\":60764253,\"first_name\":\"Dave\",\"last_name\":\"Rolle\",\"username\":\"DavidRolle\",\"is_bot\":false,\"language_code\":\"en\",\"type\":\"private\"},\"message_id\":42}}"
+}
