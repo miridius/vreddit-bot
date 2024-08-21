@@ -105,7 +105,7 @@ class VideoPost {
     // NOTE: we don't wait for this to complete, just fire it and let it run
     if (this.sendStatus) this.env.send({ action: 'upload_video' });
 
-    this.setStatus(`<b>Downloading</b> ${this.url}`, chat, replyTo);
+    this.setStatus(`⬇️ <b>Downloading</b> ${this.url}`, chat, replyTo);
 
     let title, video;
     try {
@@ -115,13 +115,17 @@ class VideoPost {
         this.getVredditInfo(),
       ]);
       if (video.error) {
-        await this.statusLog('\n' + video.error, 0);
+        await this.statusLog(
+          `\n💥 <b>Download failed</b>: ${he.encode(video.error)}`,
+          0,
+          true,
+        );
         return;
       }
       if (video.size > MAX_FILE_SIZE_BYTES) {
         const sizeMb = (video.size / 1024 / 1024).toFixed(2);
         await this.statusLog(
-          `\nVideo too large (${sizeMb} MB): ${this.url}`,
+          `\n😞 Video too large (${sizeMb} MB): ${this.url}`,
           0,
         );
         return;
@@ -137,7 +141,10 @@ class VideoPost {
       // Send the video to telegram
       await this.sendVideo(chat, video, replyTo);
     } catch (e) {
-      this.statusLog('An unexpected error occurred, please try again later', 0);
+      this.statusLog(
+        '\n🚨 An unexpected error occurred, please try again later',
+        0,
+      );
       throw e;
     } finally {
       if (video?.video) await unlink(video.video).catch(() => {});
@@ -174,7 +181,7 @@ class VideoPost {
    * @param {number} [replyTo]
    */
   async sendVideo(chat, video, replyTo) {
-    this.statusLog('\n<b>Uploading...</b>', 0, true);
+    this.statusLog('\n🚀 <b>Uploading</b>', 0, true);
     const result = await this.env.send({
       method: 'sendVideo', // necessary for inline queries
       ...video,

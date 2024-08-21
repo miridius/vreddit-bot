@@ -33,7 +33,7 @@ const DOWNLOAD_TIMEOUT = parseInt(process.env.DOWNLOAD_TIMEOUT || '0');
 /** @returns {string} */
 const getErrorMessage = (url, { stderr, originalMessage, message }) => {
   if (originalMessage === 'Timed out') {
-    return `Video download timed out after ${DOWNLOAD_TIMEOUT} seconds`;
+    return `Timed out after ${DOWNLOAD_TIMEOUT} seconds`;
   }
   if (stderr?.includes('requested format not available')) {
     return `Video too large (> 50 MB) or no supported formats available: ${url}`;
@@ -170,8 +170,7 @@ const downloadVideo = async (post, httpProxy, verbose = false) => {
 
   // post.statusLog(`\nvideo id: ${info.extractor}/${info.id}`);
 
-  post.statusLog('Done.\n');
-
+  post.statusLog('\n✅ <b>Video ready:</b>\n', undefined, true);
   const logInfo = (key, xform = (x) => x) =>
     info[key] &&
     post.statusLog(`<b>${key}</b>: ${xform(info[key])}`, undefined, true);
